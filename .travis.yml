@@ -13,8 +13,9 @@ install:
 - git clone --depth=1 https://github.com/Nic30/hwt.git
 - cd hwt
 - python setup.py install
+- cd ..
 - git clone --depth=1 https://github.com/Nic30/hwtLib.git
-- cd ../hwtLib
+- cd hwtLib
 - python setup.py install
 - cd ../hwtGraph
 - python setup.py install
