@@ -24,12 +24,6 @@ class MergeSplitsOnInterfacesCtx():
             self.items[rootPort] = c
         c.append((splitOrConcat, mainEdge))
 
-    def registerInput(self, inp):
-        raise NotImplemented()
-
-    def registerOutput(self, inp):
-        raise NotImplemented()
-
     def iterPortSplits(self):
         for srcPort, splitsAndConcats in self.items.items():
             if len(splitsAndConcats) == portCnt(srcPort):
@@ -204,6 +198,9 @@ def mergeSplitsOnInterfaces(root: LNode):
 
     # join them if it is possible
     for srcPort, splitsAndConcats in ctx.iterPortSplits():
+        if len(splitsAndConcats) <= 1:
+            continue
+
         name = "SPLIT" if srcPort.direction == PortType.OUTPUT else "CONCAT"
         newSplitNode = root.addNode(name)
         copyPort(srcPort, newSplitNode, True, "")

@@ -97,7 +97,7 @@ class StatementRenderer():
         return oPort
 
     def createRamWriteNode(self,
-                           s: RtlSignalBase,
+                           mem: RtlSignalBase,
                            clk: Optional[RtlSignalBase],
                            addr: RtlSignalBase,
                            inp: RtlSignalBase,
@@ -109,9 +109,26 @@ class StatementRenderer():
         self.addInputPort(n, "addr", addr)
         self.addInputPort(n, "in", inp)
 
-        memPort = self.addOutputPort(n, "mem", s if connectOut else None)
+        memPort = self.addOutputPort(n, "mem", mem if connectOut else None)
 
         return n, memPort
+
+    def createRamReadNode(self,
+                          mem: RtlSignalBase,
+                          clk: Optional[RtlSignalBase],
+                          addr: RtlSignalBase,
+                          out: RtlSignalBase,
+                          connectOut):
+        n = self.node.addNode(RAM_WRITE)
+        if clk is not None:
+            self.addInputPort(n, "clk", clk)
+
+        self.addInputPort(n, "addr", addr)
+        self.addInputPort(n, "mem", mem)
+
+        readPort = self.addOutputPort(n, "out", out if connectOut else None)
+
+        return n, readPort
 
     def createFFNode(self,
                      o: RtlSignalBase,
@@ -152,13 +169,18 @@ class StatementRenderer():
     def createAssignment(self, assig: Assignment, connectOut: bool):
         pctx = self.portCtx
         src = assig.src
-        if (isinstance(src, RtlSignalBase)
-                and src.hidden
-                and src not in self.netCtxs):
-            self.lazyLoadNet(src)
+        inputs = [src, ]
+        if assig.indexes:
+            inputs.extend(assig.indexes)
+
+        for s in inputs:
+            if (isinstance(s, RtlSignalBase)
+                    and s.hidden
+                    and s not in self.netCtxs):
+                self.lazyLoadNet(s)
 
         if assig.indexes:
-            raise NotImplementedError()
+            raise ValueError("This assignment should be processed before")
         elif connectOut:
             dst = assig.dst
             rootNetCtxs = self.rootNetCtxs
@@ -311,6 +333,51 @@ class StatementRenderer():
         if not self.isVirtual:
             self.netCtxs.applyConnections(self.node)
 
+    def renderEventDepIfContainer(self, ifStm: IfContainer, s: RtlSignalBase, connectOut):
+        assert not ifStm.ifFalse, ifStm
+        if ifStm.elIfs:
+            raise NotImplementedError(MUX)
+
+        subStms = list(walkStatementsForSig(ifStm.ifTrue, s))
+        assert len(subStms) == 1, subStms
+        subStm = subStms[0]
+
+        assig = None
+        clk_spec = [ifStm.cond, ]
+        subStm_tmp = subStm
+        while True:
+            if isinstance(subStm_tmp, IfContainer):
+                clk_spec.append(subStm.cond)
+                subStm_tmp = list(walkStatementsForSig(subStm_tmp.ifTrue, s))
+                assert len(subStm_tmp) == 1, subStm_tmp
+                subStm_tmp = subStm_tmp[0]
+                continue
+
+            elif isinstance(subStm_tmp, Assignment):
+                if subStm_tmp.indexes:
+                    assig = subStm_tmp
+                    break
+
+            break
+
+        if assig is None:
+            _, _out = self.renderForSignal(subStm, s, False)
+            return self.createFFNode(s, ifStm.cond, _out, connectOut)
+
+        if len(assig.indexes) != 1:
+            raise NotImplementedError()
+
+        addr = assig.indexes[0]
+        # ram write port
+        # collect clk and clk_en
+
+        if len(clk_spec) > 1:
+            raise NotImplementedError()
+        else:
+            clk = clk_spec[0]
+        return self.createRamWriteNode(assig.dst, clk, addr,
+                                       assig.src, connectOut)
+
     def renderForSignal(self, stm: Union[HdlStatement, List[HdlStatement]],
                         s: RtlSignalBase,
                         connectOut) -> Tuple[LNode, Union[RtlSignalBase, LPort]]:
@@ -349,19 +416,12 @@ class StatementRenderer():
 
             elif full_ev_dep and not parent_ev_dep:
                 # FF with optional MUX
-                assert not stm.ifFalse, stm
-                if stm.elIfs:
-                    raise NotImplementedError(MUX)
-
-                subStms = list(walkStatementsForSig(stm.ifTrue, s))
-                assert len(subStms) == 1, subStms
-                subStm = subStms[0]
-                _, _out = self.renderForSignal(subStm, s, False)
-                return self.createFFNode(s, stm.cond, _out, connectOut)
+                return self.renderEventDepIfContainer(stm, s, connectOut)
 
             elif par is None and not parent_ev_dep and s not in encl:
                 # LATCH
                 raise NotImplementedError(LATCH, stm)
+
             else:
                 # MUX
                 controls = [stm.cond]

@@ -49,9 +49,6 @@ def portTryReduce(root: LNode, port: LPort):
             print('Wrong target:\n', edge.src, "\n", edge.dst,
                   "\n", target_ch.parent, "\n", new_target)
             raise
-        # disconnect selected children from this port and target
-        children_to_destroy.add(child)
-        on_target_children_to_destroy.add(target_ch)
 
         for p in (child, target_ch):
             removed = False
@@ -66,6 +63,13 @@ def portTryReduce(root: LNode, port: LPort):
             except ValueError:
                 pass
             assert removed
+
+        if not target_ch.incomingEdges and not target_ch.outgoingEdges:
+            # disconnect selected children from this port and target
+            on_target_children_to_destroy.add(target_ch)
+
+        if not child.incomingEdges and not child.outgoingEdges:
+            children_to_destroy.add(child)
 
     # destroy children of new target and this port if possible
     port.children = [
