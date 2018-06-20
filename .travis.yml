@@ -16,7 +16,7 @@ install:
 - git clone --depth=1 https://github.com/Nic30/hwtLib.git
 - cd ../hwtLib
 - python setup.py install
-- cd ../hwtLib
+- cd ../hwtGraph
 - python setup.py install
 script:
 - coverage run --source=hwtGraph setup.py test
