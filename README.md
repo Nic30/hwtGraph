@@ -7,6 +7,9 @@
 
 Library for conversion of HWT hardware representation to graph formats for visualization purposes.
 
+Use `sudo pip3 install hwtGraph` or download this repo and run `python3 setup.py install` to install this library.
+
 ## Features
 
 * Convert HWT hardware description to ELK json for visualization.
+
