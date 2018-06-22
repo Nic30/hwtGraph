@@ -5,4 +5,8 @@
 [![Documentation Status](https://readthedocs.org/projects/hwtGraph/badge/?version=latest)](http://hwtGraph.readthedocs.io/en/latest/?badge=latest) 
 
 
-Library for conversion of HWT hardware representation to graph formats for visualization purposes
+Library for conversion of HWT hardware representation to graph formats for visualization purposes.
+
+## Features
+
+* Convert HWT hardware description to ELK json for visualization.
