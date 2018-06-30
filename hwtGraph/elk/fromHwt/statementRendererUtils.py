@@ -6,6 +6,7 @@ from hwt.hdl.statements import HdlStatement
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr, NetCtxs
+from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 
 
 def walkStatementsForSig(statments, s):
@@ -14,15 +15,16 @@ def walkStatementsForSig(statments, s):
             yield stm
 
 
-class Signal2stmPortCtx(dict):
+class Signal2stmPortCtx():
     def __init__(self, stmNode: LNode):
         self.stmNode = stmNode
+        self.data = {}
 
-    def getInside(self, k, portType):
-        p = self.get(k, None)
+    def getInside(self, sig: RtlSignalBase, portType: PortType):
+        p = self.data.get((sig, portType), None)
         if not isinstance(self.stmNode, VirtualLNode):
             if p is None:
-                return self.register(k, portType)
+                return self.register(sig, portType)
             else:
                 return p
 
@@ -34,12 +36,14 @@ class Signal2stmPortCtx(dict):
         else:
             raise NotImplementedError()
 
-    def getOutside(self, k):
-        return self[k]
+    def getOutside(self, sig: RtlSignalBase, portType: PortType):
+        return self.data[(sig, portType)]
 
-    def register(self, sig, portType: PortType):
-        p = self.get(sig, None)
+    def register(self, sig: RtlSignalBase, portType: PortType):
+        k = (sig, portType)
+        p = self.data.get(k, None)
         if p is not None:
+            assert p.direction == portType, p
             return p
 
         if portType == PortType.INPUT:
@@ -50,7 +54,7 @@ class Signal2stmPortCtx(dict):
             raise ValueError(portType)
 
         p = self.stmNode.addPort(sig.name, portType, side)
-        self[sig] = p
+        self.data[k] = p
         return p
 
 

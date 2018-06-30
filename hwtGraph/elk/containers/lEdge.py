@@ -58,10 +58,13 @@ class LEdge():
             self.isSelfLoop = False
         else:
             srcNode = src.getNode()
-            if self.parent is srcNode:
-                assert src.direction == PortType.INPUT, src
-            else:
-                assert src.direction == PortType.OUTPUT, src
+            try:
+                if self.parent is srcNode:
+                    assert src.direction == PortType.INPUT, src
+                else:
+                    assert src.direction == PortType.OUTPUT, src
+            except AssertionError:
+                raise
 
             self.srcNode = srcNode
             src.outgoingEdges.append(self)

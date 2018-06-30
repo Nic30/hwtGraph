@@ -31,6 +31,9 @@ from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
 from hwtLib.logic.segment7 import Segment7
 from hwtLib.samples.showcase0 import Showcase0
+from hwt.synthesizer.unit import Unit
+from hwt.interfaces.std import Signal
+from hwt.code import If
 
 
 def convert(u):
@@ -39,6 +42,19 @@ def convert(u):
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
     return g, data
+
+
+class DirectFF_sig(Unit):
+    def _declr(self):
+        self.o = Signal()
+        self.clk = Signal()
+
+    def _impl(self):
+        r = self._sig("r", defVal=0)
+        If(self.clk._onRisingEdge(),
+           r(r)
+        )
+        self.o(r)
 
 
 class Conversibility_TC(unittest.TestCase):
@@ -154,10 +170,14 @@ class Conversibility_TC(unittest.TestCase):
         u = Showcase0()
         convert(u)
 
+    def test_DirectFF_sig(self):
+        u = DirectFF_sig()
+        convert(u)
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_ArrayBuff_writer'))
+    # suite.addTest(Conversibility_TC('test_DirectFF_sig'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

@@ -20,8 +20,8 @@ from hwtGraph.elk.fromHwt.utils import ValueAsLNode,\
 
 
 FF = "FF"
-LATCH = "LATCH"
 MUX = "MUX"
+LATCHED_MUX = "LATCHED_MUX"
 RAM_WRITE = "RAM_WRITE"
 RAM_READ = "RAM_READ"
 CONNECTION = "CONNECTION"
@@ -90,7 +90,7 @@ class StatementRenderer():
                 else:
                     _out = self.portCtx.getInside(out, PortType.OUTPUT)
                     self.node.addEdge(oPort, _out)
-                    ooPort = self.portCtx.getOutside(out)
+                    ooPort = self.portCtx.getOutside(out, PortType.OUTPUT)
                     ctx, _ = self.rootNetCtxs.getDefault(out)
                     ctx.addDriver(ooPort)
 
@@ -147,11 +147,17 @@ class StatementRenderer():
                   output: RtlSignalBase,
                   inputs: List[Union[RtlSignalBase, Value]],
                   control: Union[RtlSignalBase, List[RtlSignalBase]],
-                  connectOut):
+                  connectOut,
+                  latched=True):
+        if latched:
+            node_type = LATCHED_MUX
+        else:
+            node_type = MUX
+
         root = self.node
         addInputPort = self.addInputPort
 
-        n = root.addNode(MUX)
+        n = root.addNode(node_type)
         if isinstance(control, (RtlSignalBase, Value)):
             control = [control, ]
 
@@ -226,7 +232,7 @@ class StatementRenderer():
                 rootCtx.addEndpoint(port)
             else:
                 # spot input port on this wrap node if required
-                isNewlySpotted = signal not in portCtx
+                isNewlySpotted = (signal, PortType.INPUT) not in portCtx.data
                 src = portCtx.register(signal, PortType.INPUT)
                 # connect input port on wrap node with specified output port
                 ctx, _ = netCtxs.getDefault(signal)
@@ -235,7 +241,7 @@ class StatementRenderer():
 
                 if isNewlySpotted:
                     # get input port from parent view
-                    _port = portCtx.getOutside(signal)
+                    _port = portCtx.getOutside(signal, PortType.INPUT)
                     rootCtx.addEndpoint(_port)
 
     def getInputNetCtx(self, signal: RtlSignalBase):
@@ -253,14 +259,14 @@ class StatementRenderer():
 
             if portCtx is not None:
                 # spot input port on this wrap node if required
-                isNewlySpotted = signal not in portCtx
+                isNewlySpotted = (signal, PortType.INPUT) not in portCtx.data
                 src = portCtx.register(signal, PortType.INPUT)
                 # connect input port on wrap node with specified output port
                 ctx.addDriver(src)
 
                 if isNewlySpotted:
                     # get input port from parent view
-                    _port = portCtx.getOutside(signal)
+                    _port = portCtx.getOutside(signal, PortType.INPUT)
                     # later connect signal in root to input port or input port
                     # of wrap node
                     rootCtx.addEndpoint(_port)
@@ -361,8 +367,8 @@ class StatementRenderer():
             break
 
         if assig is None:
-            _, _out = self.renderForSignal(subStm, s, False)
-            return self.createFFNode(s, ifStm.cond, _out, connectOut)
+            _, _in = self.renderForSignal(subStm, s, False)
+            return self.createFFNode(s, ifStm.cond, _in, connectOut)
 
         if len(assig.indexes) != 1:
             raise NotImplementedError()
@@ -388,7 +394,9 @@ class StatementRenderer():
         # filter statements for this signal only if required
         if not isinstance(stm, HdlStatement):
             stm = list(walkStatementsForSig(stm, s))
-            if len(stm) != 1:
+            if not stm:
+                return None
+            elif len(stm) != 1:
                 raise NotImplementedError("deduced MUX")
             else:
                 stm = stm[0]
@@ -418,37 +426,41 @@ class StatementRenderer():
                 # FF with optional MUX
                 return self.renderEventDepIfContainer(stm, s, connectOut)
 
-            elif par is None and not parent_ev_dep and s not in encl:
-                # LATCH
-                raise NotImplementedError(LATCH, stm)
-
             else:
-                # MUX
+                latched = par is None and not parent_ev_dep and s not in encl
+                # MUX/LATCH/MUX+LATCH
                 controls = [stm.cond]
-                inputs = [self.renderForSignal(stm.ifTrue, s, False)[1]]
+                ren = self.renderForSignal(stm.ifTrue, s, False)
+                if ren is not None:
+                    inputs = [ren[1]]
+                else:
+                    inputs = []
+
                 for c, stms in stm.elIfs:
                     controls.append(c)
-                    inputs.append(
-                        self.renderForSignal(stms, s, False)[1])
+                    ren = self.renderForSignal(stms, s, False)
+                    if ren is not None:
+                        inputs.append(ren[1])
                 if stm.ifFalse:
-                    inputs.append(self.renderForSignal(
-                        stm.ifFalse, s, False)[1])
+                    ren = self.renderForSignal(stm.ifFalse, s, False)
+                    if ren is not None:
+                        inputs.append(ren[1])
 
-                return self.createMux(s, inputs, controls, connectOut)
+                return self.createMux(s, inputs, controls, connectOut,
+                                      latched=latched)
 
         # render SwitchContainer instances
         elif isinstance(stm, SwitchContainer):
-            if s in encl:
-                inputs = []
-                for _, stms in stm.cases:
-                    inputs.append(self.renderForSignal(stms, s, False)[1])
+            latched = s in encl
+            inputs = []
+            for _, stms in stm.cases:
+                inputs.append(self.renderForSignal(stms, s, False)[1])
 
-                if stm.default:
-                    inputs.append(self.renderForSignal(
-                        stm.default, s, False)[1])
+            if stm.default:
+                inputs.append(self.renderForSignal(
+                    stm.default, s, False)[1])
 
-                return self.createMux(s, inputs, stm.switchOn, connectOut)
-            else:
-                raise NotImplementedError(LATCH, MUX)
+            return self.createMux(s, inputs, stm.switchOn, connectOut,
+                                  latched=latched)
         else:
             raise TypeError(stm)
