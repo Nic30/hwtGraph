@@ -1,39 +1,39 @@
 import unittest
 
+from hwt.code import If
+from hwt.interfaces.std import Signal
+from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, DEFAULT_LAYOUT_OPTIMIZATIONS
 from hwtLib.amba.axi4_rDatapump import Axi_rDatapump
 from hwtLib.amba.axi4_streamToMem import Axi4streamToMem
+from hwtLib.amba.axi4_wDatapump import Axi_wDatapump
 from hwtLib.amba.axiLite_comp.reg import AxiLiteReg
 from hwtLib.amba.axi_comp.tester import AxiTester
-from hwtLib.samples.ipCoreCompatibleWrap import ArrayIntfExample
-from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
-from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
-from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-from hwtLib.amba.axi4_wDatapump import Axi_wDatapump
-from hwtLib.mem.cam import Cam
-from hwtLib.mem.clkSynchronizer import ClkSynchronizer
 from hwtLib.clocking.clkDivider import ClkDiv3
-from hwtLib.samples.statements.constDriver import ConstDriverUnit
+from hwtLib.i2c.masterBitCntrl import I2cMasterBitCtrl
+from hwtLib.logic.binToOneHot import BinToOneHot
+from hwtLib.logic.bitonicSorter import BitonicSorter
+from hwtLib.logic.cntrGray import GrayCntr
 from hwtLib.logic.crc import Crc
 from hwtLib.logic.crcComb import CrcComb
-from hwtLib.logic.binToOneHot import BinToOneHot
+from hwtLib.logic.segment7 import Segment7
+from hwtLib.mem.cam import Cam
+from hwtLib.mem.clkSynchronizer import ClkSynchronizer
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
-from hwtLib.logic.cntrGray import GrayCntr
-from hwtLib.i2c.masterBitCntrl import I2cMasterBitCtrl
-from hwtLib.samples.operators.indexing import IndexingInernJoin,\
-    IndexingInernRangeSplit, IndexingInernSplit
-from hwtLib.samples.mem.reg import Latch
-from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
-from hwtLib.logic.bitonicSorter import BitonicSorter
 from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
-from hwtLib.logic.segment7 import Segment7
+from hwtLib.samples.ipCoreCompatibleWrap import ArrayIntfExample
+from hwtLib.samples.mem.reg import Latch
+from hwtLib.samples.operators.indexing import IndexingInernJoin,\
+    IndexingInernRangeSplit, IndexingInernSplit
 from hwtLib.samples.showcase0 import Showcase0
-from hwt.synthesizer.unit import Unit
-from hwt.interfaces.std import Signal
-from hwt.code import If
+from hwtLib.samples.statements.constDriver import ConstDriverUnit
+from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
+from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
+from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
+from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 
 
 def convert(u):
