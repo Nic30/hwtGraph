@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='hwtGraph',
-      version='0.1',
+      version='0.0.1',
       description='Library for conversion of HWT hardware representation '
                   'to graph formats for visualization purposes',
       url='https://github.com/Nic30/hwtGraph',
