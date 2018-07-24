@@ -6,7 +6,7 @@ cache:
   apt: true
 python:
 - '3.6'
-- nightly
+#- nightly
 install:
 - cd ..
 - pip install pytest coveralls
