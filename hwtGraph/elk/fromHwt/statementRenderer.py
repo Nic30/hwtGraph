@@ -180,8 +180,8 @@ class StatementRenderer():
             inputs.extend(assig.indexes)
 
         for s in inputs:
-            if (isinstance(s, RtlSignalBase)
-                    and s.hidden
+            if (not isConst(s)
+                    and s.hidden 
                     and s not in self.netCtxs):
                 self.lazyLoadNet(s)
 
@@ -279,15 +279,20 @@ class StatementRenderer():
         :note: operator tree is constrained by signals with hidden==False
         :note: statement nodes are not connected automatically
         """
-        assert len(signal.drivers) == 1, signal
-        driver = signal.drivers[0]
-        if isinstance(driver, Operator):
-            d = self.addOperatorAsLNode(driver)
-            if isinstance(d, LNode):
-                c, _ = self.netCtxs.getDefault(signal)
-                c.addDriver(d.east[0])
-            else:
-                self.netCtxs.joinNetsByKeyVal(signal, d)
+        d_cnt = len(signal.drivers)
+        if d_cnt == 1:
+            driver = signal.drivers[0]
+            if isinstance(driver, Operator):
+                d = self.addOperatorAsLNode(driver)
+                if isinstance(d, LNode):
+                    c, _ = self.netCtxs.getDefault(signal)
+                    c.addDriver(d.east[0])
+                else:
+                    self.netCtxs.joinNetsByKeyVal(signal, d)
+        elif d_cnt == 0 and signal.defVal._isFullVld():
+            raise AssertionError("Value of this net should have been already rendered")
+        else:
+            raise AssertionError(signal, signal.drivers)
 
     def addOperatorAsLNode(self, op: Operator) -> Union[LNode, NetCtx]:
         root = self.node
