@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/Nic30/hwtGraph/badge.svg?branch=master)](https://coveralls.io/github/Nic30/hwtGraph?branch=master)
 [![PyPI version](https://badge.fury.io/py/hwtGraph.svg)](http://badge.fury.io/py/hwtGraph) 
 [![Documentation Status](https://readthedocs.org/projects/hwtGraph/badge/?version=latest)](http://hwtGraph.readthedocs.io/en/latest/?badge=latest) 
-
+[![Python version](https://img.shields.io/pypi/pyversions/hwtGraph.svg)](https://img.shields.io/pypi/pyversions/hwtGraph.svg)
 
 Library for conversion of HWT hardware representation to graph formats for visualization purposes.
 
