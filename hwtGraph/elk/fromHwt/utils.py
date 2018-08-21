@@ -20,9 +20,13 @@ from hwtGraph.elk.containers.lPort import LPort
 class NetCtxs(dict):
     def applyConnections(self, root):
         for net in set(self.values()):
+            if net.endpoints:
+                assert net.drivers
+
             for src in net.drivers:
                 for dst in net.endpoints:
-                    root.addEdge(src, dst)
+                    e = root.addEdge(src, dst)
+                    print(e)
 
     def joinNetsByKey(self, k0, k1):
         v0, _ = self.getDefault(k0)

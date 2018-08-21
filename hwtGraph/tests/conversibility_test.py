@@ -20,11 +20,11 @@ from hwtLib.logic.crc import Crc
 from hwtLib.logic.crcComb import CrcComb
 from hwtLib.logic.segment7 import Segment7
 from hwtLib.mem.cam import Cam
-from hwtLib.mem.clkSynchronizer import ClkSynchronizer
+from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
 from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
-from hwtLib.samples.ipCoreCompatibleWrap import ArrayIntfExample
+from hwtLib.samples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.samples.mem.reg import Latch
 from hwtLib.samples.operators.indexing import IndexingInernJoin,\
     IndexingInernRangeSplit, IndexingInernSplit
@@ -34,6 +34,7 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
+import json
 
 
 def convert(u):
@@ -41,12 +42,14 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
+    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+        json.dump(data, fp)
     return g, data
 
 
 class DirectFF_sig(Unit):
     def _declr(self):
-        self.o = Signal()
+        self.o = Signal()._m()
         self.clk = Signal()
 
     def _impl(self):

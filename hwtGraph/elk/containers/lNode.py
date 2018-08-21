@@ -92,6 +92,9 @@ class LNode():
         return n
 
     def iterEdges(self, filterSelfLoops=False):
+        """
+        Iter edges connected from outside of this unit
+        """
         for p in self.iterPorts():
             yield from p.iterEdges(filterSelfLoops=filterSelfLoops)
 
