@@ -2,7 +2,7 @@ from typing import Union, List
 
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.constants import INTF_DIRECTION
-from hwt.hdl.operator import Operator
+from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
 from hwt.hdl.portItem import PortItem
 from hwt.hdl.types.defs import BIT
@@ -15,7 +15,6 @@ from hwtGraph.elk.containers.constants import PortType, PortSide, PortConstraint
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
-from hwt.synthesizer.interfaceLevel.unitImplHelpers import getSignalName
 
 
 class NetCtxs(dict):
@@ -28,8 +27,14 @@ class NetCtxs(dict):
 
             if net.endpoints:
                 assert net.drivers
+            if not net.endpoints:
+                # unconnected input or constant which was replaced by value
+                assert not sig.endpoints\
+                       or isConst(sig), sig
+                continue
+
             root.addHyperEdge(list(net.drivers), list(net.endpoints),
-                              name=getSignalName(sig), originObj=sig)
+                              name=repr(sig), originObj=sig)
 
     def joinNetsByKey(self, k0, k1):
         v0, _ = self.getDefault(k0)
@@ -70,6 +75,9 @@ class NetCtxs(dict):
         return v0
 
     def getDefault(self, k):
+        """
+        :return: tuple (value, True if key was there before else False) 
+        """
         try:
             return self[k], True
         except KeyError:
@@ -89,12 +97,14 @@ class NetCtx():
         self.endpoints.extend(other.endpoints)
 
     def addDriver(self, d):
+        # print("add d", self.actualKeys, d)
         if isinstance(d, RtlSignalBase):
             return self.others.joinNetsByKeyVal(d, self)
         else:
             return self.drivers.append(d)
 
     def addEndpoint(self, ep):
+        # print("add e", self.actualKeys, ep)
         if isinstance(ep, RtlSignalBase):
             return self.others.joinNetsByValKey(self, ep)
         else:

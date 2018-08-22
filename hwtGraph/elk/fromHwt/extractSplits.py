@@ -76,7 +76,10 @@ def extractSplits(root: LNode):
                 p = n.west[0]
                 if not p.incomingEdges:
                     return
-                srcPort = p.incomingEdges[0].src
+                srcPorts = p.incomingEdges[0].srcs
+                assert len(srcPorts) == 1
+                srcPort = srcPorts[0]
+                dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
                 sliceNode = root.addNode(
                     "SLICE", originObj=InterfaceSplitInfo(sliceParts))
                 inputPort = sliceNode.addPort(
@@ -90,20 +93,32 @@ def extractSplits(root: LNode):
                     oldAssigNode = toL[assig]
                     dstPorts = []
 
+                    dstPortsOnInputNet.remove(oldAssigNode.west[0])
                     for e in list(oldAssigNode.west[0].incomingEdges):
                         e.remove()
 
                     for e in list(oldAssigNode.east[0].outgoingEdges):
-                        dstPorts.append((e.dst, e.originObj))
+                        for _dst in e.dsts:
+                            dstPorts.append((_dst, e.originObj))
                         e.remove()
 
                     root.children.remove(oldAssigNode)
                     # remove index value node (we know that it is constant,
                     # from original select)
-                    root.children.remove(
-                        oldAssigNode.west[1].incomingEdges[0].srcNode)
+                    _e = oldAssigNode.west[1].incomingEdges[0]
+                    _e.removeTarget(oldAssigNode.west[1])
+                    assert len(_e.srcs) == 1
+                    indexValNodeP = _e.srcs[0]
+                    if not _e.dsts:
+                        _e.remove()
 
-                    for dst, originObj in dstPorts:
-                        root.addEdge(outPort, dst, originObj=originObj)
+                    if not indexValNodeP.outgoingEdges:
+                        root.children.remove(indexValNodeP.parentNode)
 
-                root.addEdge(srcPort, inputPort, name=e.name, originObj=e.originObj)
+                    root.addHyperEdge([outPort],
+                                      [dst[0] for dst in dstPorts],
+                                      originObj=dstPorts[0][1])
+
+                dstPortsOnInputNet.append(inputPort)
+                root.addHyperEdge([srcPort, ], dstPortsOnInputNet,
+                                  name=e.name, originObj=e.originObj)

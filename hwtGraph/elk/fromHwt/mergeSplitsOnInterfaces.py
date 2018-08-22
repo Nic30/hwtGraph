@@ -177,23 +177,25 @@ def mergeSplitsOnInterfaces(root: LNode):
 
     ctx = MergeSplitsOnInterfacesCtx()
     for ch in root.children:
-        srcPort = None
+        srcPorts = None
         try:
             if ch.name == "CONCAT":
                 p = single(ch.east, lambda x: True)
                 e = single(p.outgoingEdges, lambda x: True)
-                srcPort = e.dst
+                srcPorts = e.dsts
             elif ch.name == "SLICE":
                 p = single(ch.west, lambda x: True)
                 e = single(p.incomingEdges, lambda x: True)
-                srcPort = e.src
+                srcPorts = e.srcs
         except (DuplicitValueExc, NoValueExc):
             continue
 
-        if srcPort is not None and isinstance(srcPort.parent, LPort):
-            # only for non primitive ports
-            rootPort = getRootIntfPort(srcPort)
-            ctx.register(rootPort, ch, e)
+        if srcPorts is not None:
+            for srcPort in srcPorts:
+                if isinstance(srcPort.parent, LPort):
+                    # only for non primitive ports
+                    rootPort = getRootIntfPort(srcPort)
+                    ctx.register(rootPort, ch, e)
 
     # join them if it is possible
     for srcPort, splitsAndConcats in ctx.iterPortSplits():

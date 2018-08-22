@@ -10,7 +10,7 @@ def searchRootOfTree(reducibleChildren, nodeFromTree):
         if not out_e:
             return nodeFromTree
 
-        nextNode = out_e[0].dstNode
+        nextNode = out_e[0].dsts[0].parentNode
         if nextNode in reducibleChildren:
             nodeFromTree = nextNode
         else:
@@ -19,10 +19,11 @@ def searchRootOfTree(reducibleChildren, nodeFromTree):
 
 def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
     """
-    Walk all nodes and discover trees of nodes (usually operators) and reduce them
-    to single node with multiple outputs
+    Walk all nodes and discover trees of nodes (usually operators)
+    and reduce them to single node with multiple outputs
 
-    :attention: node has to have single output
+    :attention: selected nodes has to have single output
+                and has to be connected to nets with single driver
     """
     for ch in root.children:
         if ch.children:
@@ -47,7 +48,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
         nodeStack.append((treeRoot, None))
 
         while nodeStack:
-            # Pop the top item from stack and print it
+            # Pop the top item from stack and print it to the graph
             node, e = nodeStack.pop()
             if node in reducibleChildren and node not in reducedNodesSet:
                 reducedNodes.append(node)
@@ -55,7 +56,8 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
                 # walk inputs and add child nodes to stack
                 for p in node.west:
                     for e in p.iterEdges():
-                        nodeStack.append((e.srcNode, e))
+                        assert len(e.srcs) == 1
+                        nodeStack.append((e.srcs[0].parentNode, e))
             else:
                 inputEdges.append(e)
 
@@ -68,9 +70,10 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
             oEdges = treeRoot.east[0].outgoingEdges
 
             for outputedge in list(oEdges):
-                dst = outputedge.dst
+                dsts = list(outputedge.dsts)
+                assert len(dsts) > 0
                 outputedge.remove()
-                root.addEdge(o, dst, originObj=outputedge.originObj)
+                root.addHyperEdge([o, ], dsts, originObj=outputedge.originObj)
 
             for i, ie in enumerate(inputEdges):
                 name = None
@@ -87,9 +90,10 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
 
                 inp = newNode.addPort(name,
                                       PortType.INPUT, PortSide.WEST)
-                src = ie.src
+                srcs = list(ie.srcs)
+                assert len(srcs) == 1
                 ie.remove()
-                root.addEdge(src, inp, originObj=ie.originObj)
+                root.addEdge(srcs[0], inp, originObj=ie.originObj)
 
             for n in reducedNodes:
                 root.children.remove(n)

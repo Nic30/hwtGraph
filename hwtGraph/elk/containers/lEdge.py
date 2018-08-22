@@ -13,18 +13,17 @@ class LEdge():
     :ivar dsts: list of LPort instances where this edge ends
     """
 
-    def __init__(self, parentNode: "LNode", srcs, dsts, name: str=None, originObj=None):
+    def __init__(self, parentNode: "LNode", srcs, dsts,
+                 name: str=None, originObj=None):
         self.parentNode = parentNode
         if name is not None:
             assert isinstance(name, str)
-        if name is None and originObj is not None:
-            name = getSignalName(originObj)
 
         self.name = name
         self.originObj = originObj
 
-        assert isinstance(srcs, list)
-        assert isinstance(dsts, list)
+        assert isinstance(srcs, list) and len(srcs) >= 1, originObj
+        assert isinstance(dsts, list) and len(dsts) >= 1, originObj
 
         for src in srcs:
             self.addSource(src, addToSrc=False)
@@ -90,8 +89,10 @@ class LEdge():
                 "targetPort": str(idStore[dst]),
             }
         d["id"] = str(idStore[self])
-        if self.name is not None:
-            d["hwt"] = {"name": self.name}
+        name = self.name
+        if name is None and self.originObj is not None:
+            name = repr(self.originObj)
+        d["hwt"] = {"name": name}
 
         return d
 

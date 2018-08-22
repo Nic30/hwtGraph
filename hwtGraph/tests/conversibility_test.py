@@ -34,8 +34,6 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-import json
-from pprint import pprint
 
 
 def convert(u):
@@ -43,9 +41,10 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
+    import json
     with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
         json.dump(data, fp)
-    pprint(data)
+    # pprint(data)
     return g, data
 
 
@@ -182,7 +181,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    suite.addTest(Conversibility_TC('test_DirectFF_sig'))
+    suite.addTest(Conversibility_TC('test_Crc'))
     # suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
