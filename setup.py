@@ -24,6 +24,20 @@ setup(name='hwtGraph',
       tests_require=[
           'hwtLib'
       ],
+      classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+        "Topic :: System :: Hardware",
+        "Topic :: Utilities"
+      ],
       license='MIT',
       packages=find_packages(),
       zip_safe=False)
