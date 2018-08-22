@@ -22,10 +22,7 @@ class NetCtxs(dict):
         for net in set(self.values()):
             if net.endpoints:
                 assert net.drivers
-
-            for src in net.drivers:
-                for dst in net.endpoints:
-                    e = root.addEdge(src, dst)
+            root.addHyperEdge(list(net.drivers), list(net.endpoints))
 
     def joinNetsByKey(self, k0, k1):
         v0, _ = self.getDefault(k0)

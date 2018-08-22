@@ -3,9 +3,9 @@ from typing import List, Generator
 
 from hwt.pyUtils.uniqList import UniqList
 
-from hwtGraph.elk.containers.constants import PortSide, PortType,\
+from hwtGraph.elk.containers.constants import PortSide, PortType, \
     NodeType, PortConstraints, LayerConstraint
-from hwtGraph.elk.containers.lEdge import LEdge, HyperEdge
+from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lPort import LPort
 
 
@@ -25,7 +25,7 @@ class LNode():
         (if it is not only container of children)
     """
 
-    def __init__(self, parent: "LNode"=None, name: str= None,
+    def __init__(self, parent: "LNode"=None, name: str=None,
                  originObj=None, node2lnode=None, bodyText=None):
         super(LNode, self).__init__()
         if name is not None:
@@ -99,8 +99,11 @@ class LNode():
             yield from p.iterEdges(filterSelfLoops=filterSelfLoops)
 
     def addEdge(self, src: LPort, dst: LPort, name=None, originObj=None):
-        e = LEdge(self, name, originObj=originObj)
-        e.setSrcDst(src, dst)
+        e = LEdge(self, [src], [dst], name=name, originObj=originObj)
+        return e
+
+    def addHyperEdge(self, srcs, dsts, name=None, originObj=None):
+        e = LEdge(self, srcs, dsts, name=name, originObj=originObj)
         return e
 
     def toElkJson_registerNodes(self, idStore, isTop=False):
@@ -155,11 +158,7 @@ class LNode():
             edges = UniqList()
             for ch in self.children:
                 for e in ch.iterEdges():
-                    p1 = e.srcNode.parent
-                    p2 = e.dstNode.parent
-                    if ((p1 is self and p2 is self) or
-                            (e.srcNode is self and p2 is self) or
-                            (p1 is self and e.dstNode is self)):
+                    if e.parentNode is self:
                         edges.append(e)
 
             for ch in self.children:
@@ -168,17 +167,10 @@ class LNode():
             nodes.sort(key=lambda n: n["id"])
             d["children"] = nodes
 
-            _connections = {}
             for e in edges:
-                try:
-                    he = _connections[e.src]
-                except KeyError:
-                    he = HyperEdge([e.src], [])
-                    _connections[e.src] = he
-                he.dsts.append(e.dst)
-                idStore.registerEdge(he)
+                idStore.registerEdge(e)
 
-            d["edges"] = [e.toElkJson(idStore) for e in _connections.values()]
+            d["edges"] = [e.toElkJson(idStore) for e in edges]
 
         return d
 
@@ -191,6 +183,7 @@ class LNode():
 
 
 class LayoutExternalPort(LNode):
+
     def __init__(self, parent: "LNode", name: str=None,
                  direction=None, node2lnode=None):
         super(LayoutExternalPort, self).__init__(
