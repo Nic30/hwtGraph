@@ -41,9 +41,9 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
-    import json
-    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
-        json.dump(data, fp)
+    # import json
+    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+    #     json.dump(data, fp)
     # pprint(data)
     return g, data
 
@@ -181,7 +181,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    suite.addTest(Conversibility_TC('test_Crc'))
-    # suite.addTest(unittest.makeSuite(Conversibility_TC))
+    # suite.addTest(Conversibility_TC('test_Crc'))
+    suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
