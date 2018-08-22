@@ -26,7 +26,6 @@ class NetCtxs(dict):
             for src in net.drivers:
                 for dst in net.endpoints:
                     e = root.addEdge(src, dst)
-                    print(e)
 
     def joinNetsByKey(self, k0, k1):
         v0, _ = self.getDefault(k0)

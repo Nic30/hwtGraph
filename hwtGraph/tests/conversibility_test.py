@@ -42,8 +42,8 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
-    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
-        json.dump(data, fp)
+    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+    #     json.dump(data, fp)
     return g, data
 
 
