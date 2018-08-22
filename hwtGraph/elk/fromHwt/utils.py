@@ -200,12 +200,6 @@ def getSinglePort(ports: List[LPort]) -> LEdge:
     return ports[0]
 
 
-def removeEdge(edge: LEdge):
-    edge.dst.incomingEdges.remove(edge)
-    edge.src.outgoingEdges.remove(edge)
-    edge.dst = edge.dstNode = edge.src = edge.srcNode = None
-
-
 def isUselessTernary(op):
     if op.operator == AllOps.TERNARY:
         ifTrue = op.operands[1]

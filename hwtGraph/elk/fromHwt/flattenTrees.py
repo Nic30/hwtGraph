@@ -2,7 +2,6 @@ from typing import Callable
 
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
-from hwtGraph.elk.fromHwt.utils import removeEdge
 
 
 def searchRootOfTree(reducibleChildren, nodeFromTree):
@@ -70,7 +69,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
 
             for outputedge in list(oEdges):
                 dst = outputedge.dst
-                removeEdge(outputedge)
+                outputedge.remove()
                 root.addEdge(o, dst, originObj=outputedge.originObj)
 
             for i, ie in enumerate(inputEdges):
@@ -89,7 +88,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
                 inp = newNode.addPort(name,
                                       PortType.INPUT, PortSide.WEST)
                 src = ie.src
-                removeEdge(ie)
+                ie.remove()
                 root.addEdge(src, inp, originObj=ie.originObj)
 
             for n in reducedNodes:

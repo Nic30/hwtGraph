@@ -1,6 +1,33 @@
 from hwtGraph.elk.containers.constants import PortType
 
 
+class HyperEdge():
+    def __init__(self, srcs, dsts):
+        assert isinstance(srcs, list)
+        assert isinstance(dsts, list)
+
+        self.srcs = srcs
+        self.dsts = dsts
+
+    def toElkJson(self, idStore):
+        if len(self.dsts) > 1 or len(self.srcs) > 1:
+            return {
+                "id": str(idStore[self]),
+                "sources": [str(idStore[src]) for src in self.srcs],
+                "targets": [str(idStore[dst]) for dst in self.dsts],
+            }
+        else:
+            src = self.srcs[0]
+            dst = self.dsts[0]
+            return {
+                "id": str(idStore[self]),
+                "source": str(idStore[src.parentNode]),
+                "sourcePort": str(idStore[src]),
+                "target": str(idStore[dst.parentNode]),
+                "targetPort": str(idStore[dst]),
+            }
+
+
 class LEdge():
     """
     Edge in layout graph
@@ -38,7 +65,7 @@ class LEdge():
             self.dstNode = None
             self.isSelfLoop = False
         else:
-            dstNode = dst.getNode()
+            dstNode = dst.parentNode
             if self.parent is dstNode:
                 assert dst.direction == PortType.OUTPUT, dst
             else:
@@ -57,7 +84,7 @@ class LEdge():
             self.srcNode = None
             self.isSelfLoop = False
         else:
-            srcNode = src.getNode()
+            srcNode = src.parentNode
             try:
                 if self.parent is srcNode:
                     assert src.direction == PortType.INPUT, src
@@ -69,6 +96,11 @@ class LEdge():
             self.srcNode = srcNode
             src.outgoingEdges.append(self)
             self.isSelfLoop = self.srcNode is self.dstNode
+
+    def remove(self):
+        self.dst.incomingEdges.remove(self)
+        self.src.outgoingEdges.remove(self)
+        self.dst = self.dstNode = self.src = self.srcNode = None
 
     def toElkJson(self, idStore):
         return {

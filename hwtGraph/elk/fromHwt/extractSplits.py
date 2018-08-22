@@ -6,8 +6,6 @@ from hwt.hdl.types.bits import Bits
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 
-from hwtGraph.elk.fromHwt.utils import removeEdge
-
 
 class InterfaceSplitInfo(tuple):
     pass
@@ -93,11 +91,11 @@ def extractSplits(root: LNode):
                     dstPorts = []
 
                     for e in list(oldAssigNode.west[0].incomingEdges):
-                        removeEdge(e)
+                        e.remove()
 
                     for e in list(oldAssigNode.east[0].outgoingEdges):
                         dstPorts.append((e.dst, e.originObj))
-                        removeEdge(e)
+                        e.remove()
 
                     root.children.remove(oldAssigNode)
                     # remove index value node (we know that it is constant,

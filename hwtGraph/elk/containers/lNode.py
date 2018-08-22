@@ -5,7 +5,7 @@ from hwt.pyUtils.uniqList import UniqList
 
 from hwtGraph.elk.containers.constants import PortSide, PortType,\
     NodeType, PortConstraints, LayerConstraint
-from hwtGraph.elk.containers.lEdge import LEdge
+from hwtGraph.elk.containers.lEdge import LEdge, HyperEdge
 from hwtGraph.elk.containers.lPort import LPort
 
 
@@ -168,9 +168,17 @@ class LNode():
             nodes.sort(key=lambda n: n["id"])
             d["children"] = nodes
 
+            _connections = {}
             for e in edges:
-                idStore.registerEdge(e)
-            d["edges"] = [e.toElkJson(idStore) for e in edges]
+                try:
+                    he = _connections[e.src]
+                except KeyError:
+                    he = HyperEdge([e.src], [])
+                    _connections[e.src] = he
+                he.dsts.append(e.dst)
+                idStore.registerEdge(he)
+
+            d["edges"] = [e.toElkJson(idStore) for e in _connections.values()]
 
         return d
 

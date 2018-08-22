@@ -38,7 +38,7 @@ def connectSignalToStatements(s, toL, stmPorts, root, reducedStatements):
         else:
             src = stmPorts[node].getOutside(s)
 
-        assert src.getNode().parent == root, (s, node)
+        assert src.parentNode.parent == root, (s, node)
         driverPorts.add(src)
 
     for stm in s.endpoints:
