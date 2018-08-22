@@ -89,7 +89,7 @@ class StatementRenderer():
                     ctx.addDriver(oPort)
                 else:
                     _out = self.portCtx.getInside(out, PortType.OUTPUT)
-                    self.node.addEdge(oPort, _out)
+                    self.node.addEdge(oPort, _out, originObj=out)
                     ooPort = self.portCtx.getOutside(out, PortType.OUTPUT)
                     ctx, _ = self.rootNetCtxs.getDefault(out)
                     ctx.addDriver(ooPort)

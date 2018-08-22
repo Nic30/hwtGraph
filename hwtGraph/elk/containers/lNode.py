@@ -128,21 +128,23 @@ class LNode():
         for ch in self.children:
             ch.toElkJson_registerPorts(idStore)
 
-    def toElkJson(self, idStore, isTop=True):
+    def toElkJson(self, idStore: "ElkIdStore", isTop=True):
         props = {
             "org.eclipse.elk.portConstraints": self.portConstraints.name,
             'org.eclipse.elk.randomSeed': 0,
             'org.eclipse.elk.layered.mergeEdges': 1,
         }
-
-        d = {
+        d_hwt = {
             "name": self.name,
+        }
+        d = {
+            "hwt": d_hwt,
             "ports": [p.toElkJson(idStore)
                       for p in self.iterPorts()],
             "properties": props
         }
         if self.bodyText is not None:
-            d["bodyText"] = self.bodyText
+            d_hwt["bodyText"] = self.bodyText
 
         if not isTop:
             d["id"] = str(idStore[self])
@@ -172,6 +174,8 @@ class LNode():
 
             d["edges"] = [e.toElkJson(idStore) for e in edges]
 
+        d_hwt["maxId"] = idStore.getMaxId()
+
         return d
 
     def getNode(self):
@@ -199,7 +203,6 @@ class LayoutExternalPort(LNode):
 
     def toElkJson(self, idStore, isTop=True):
         d = super(LayoutExternalPort, self).toElkJson(idStore, isTop=isTop)
-        del d['name']
+        d["hwt"]['isExternalPort'] = True
         d['properties']["org.eclipse.elk.layered.layering.layerConstraint"] = self.layeringLayerConstraint.name
-        d['isExternalPort'] = True
         return d

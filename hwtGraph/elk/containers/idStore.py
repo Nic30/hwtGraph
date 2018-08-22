@@ -20,6 +20,9 @@ class ElkIdStore(dict):
         self[obj] = k
         self.reverseDict[k] = obj
 
+    def getMaxId(self):
+        return len(self) - 1
+
     def registerNode(self, node: LNode):
         self.register(node)
 

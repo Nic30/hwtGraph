@@ -106,4 +106,4 @@ def extractSplits(root: LNode):
                     for dst, originObj in dstPorts:
                         root.addEdge(outPort, dst, originObj=originObj)
 
-                root.addEdge(srcPort, inputPort, e.name, e.originObj)
+                root.addEdge(srcPort, inputPort, name=e.name, originObj=e.originObj)

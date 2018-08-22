@@ -1,4 +1,5 @@
 from hwtGraph.elk.containers.constants import PortType
+from hwt.synthesizer.interfaceLevel.unitImplHelpers import getSignalName
 
 
 class LEdge():
@@ -16,8 +17,12 @@ class LEdge():
         self.parentNode = parentNode
         if name is not None:
             assert isinstance(name, str)
+        if name is None and originObj is not None:
+            name = getSignalName(originObj)
+
         self.name = name
         self.originObj = originObj
+
         assert isinstance(srcs, list)
         assert isinstance(dsts, list)
 
@@ -68,23 +73,28 @@ class LEdge():
     def toElkJson(self, idStore):
         if len(self.dsts) > 1 or len(self.srcs) > 1:
             # hyperedge
-            return {
-                "id": str(idStore[self]),
-                "sources": [str(idStore[src]) for src in self.srcs],
-                "targets": [str(idStore[dst]) for dst in self.dsts],
+            d = {
+                "sources": [(str(idStore[src.parentNode]),
+                             str(idStore[src])) for src in self.srcs],
+                "targets": [(str(idStore[dst.parentNode]),
+                             str(idStore[dst])) for dst in self.dsts],
             }
         else:
             # regular edge
             src = self.srcs[0]
             dst = self.dsts[0]
-            return {
-                "id": str(idStore[self]),
+            d = {
                 "source": str(idStore[src.parentNode]),
                 "sourcePort": str(idStore[src]),
                 "target": str(idStore[dst.parentNode]),
                 "targetPort": str(idStore[dst]),
             }
+        d["id"] = str(idStore[self])
+        if self.name is not None:
+            d["hwt"] = {"name": self.name}
+
+        return d
 
     def __repr__(self):
         return "<%s, %r -> %r>" % (
-            self.__class__.__name__, self.src, self.dst)
+            self.__class__.__name__, self.srcs, self.dsts)

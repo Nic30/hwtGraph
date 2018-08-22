@@ -15,14 +15,21 @@ from hwtGraph.elk.containers.constants import PortType, PortSide, PortConstraint
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
+from hwt.synthesizer.interfaceLevel.unitImplHelpers import getSignalName
 
 
 class NetCtxs(dict):
     def applyConnections(self, root):
-        for net in set(self.values()):
+        seen = set()
+        for sig, net in self.items():
+            if net in seen:
+                continue
+            seen.add(net)
+
             if net.endpoints:
                 assert net.drivers
-            root.addHyperEdge(list(net.drivers), list(net.endpoints))
+            root.addHyperEdge(list(net.drivers), list(net.endpoints),
+                              name=getSignalName(sig), originObj=sig)
 
     def joinNetsByKey(self, k0, k1):
         v0, _ = self.getDefault(k0)

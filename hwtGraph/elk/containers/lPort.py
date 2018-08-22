@@ -91,9 +91,11 @@ class LPort():
 
         return {
             "id": str(idStore[self]),
-            "name": self.name,
+            "hwt": {
+                "level": self.getLevel(),
+                "name": self.name,
+            },
             "direction": self.direction.name,
-            "level": self.getLevel(),
             "properties": props,
         }
 
