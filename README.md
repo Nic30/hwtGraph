@@ -11,5 +11,6 @@ Use `sudo pip3 install hwtGraph` or download this repo and run `python3 setup.py
 
 ## Features
 
-* Convert HWT hardware description to ELK json for visualization.
+* Convert HWT hardware description to [ELK json](https://www.eclipse.org/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html) for visualization.
 
+* suppor for additional graph transofrmations in all transformation phases (conversion is specified as sequence of transofrmations and user can modify it)
