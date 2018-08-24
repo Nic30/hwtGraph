@@ -181,7 +181,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_Crc'))
+    #suite.addTest(Conversibility_TC('test_AxiTester'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

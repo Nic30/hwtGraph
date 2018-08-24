@@ -154,6 +154,7 @@ class StatementRenderer():
                 # This node is inlined inside of parent.
                 # Mark that this output of subnode should be connected
                 # to output of parent node.
+                print(out)
                 ctx, _ = self.netCtxs.getDefault(out)
                 ctx.addDriver(oPort)
             else:

@@ -133,7 +133,10 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
 
     elif not inEdges and not outEdges:
         if port.direction == PortType.INPUT:
-            print("Warning", port, "not connected")
+            if port.originObj is not None:
+                assert not port.originObj.src.drivers, port.originObj
+            else:
+                print("Warning", port, "not connected")
         return 0
     else:
         connectedElemCnt = 0
