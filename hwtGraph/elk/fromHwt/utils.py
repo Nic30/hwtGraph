@@ -11,7 +11,8 @@ from hwt.pyUtils.uniqList import UniqList
 from hwt.serializer.hwt.serializer import HwtSerializer
 from hwt.synthesizer.interface import Interface
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
-from hwtGraph.elk.containers.constants import PortType, PortSide, PortConstraints
+from hwtGraph.elk.containers.constants import PortType, PortSide,\
+    PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
@@ -31,6 +32,7 @@ class NetCtxs(dict):
 
             if net.endpoints:
                 assert net.drivers
+
             if not net.endpoints:
                 # unconnected input or constant which was replaced by value
                 assert not sig.endpoints\
@@ -80,7 +82,7 @@ class NetCtxs(dict):
 
     def getDefault(self, k):
         """
-        :return: tuple (value, True if key was there before else False) 
+        :return: tuple (value, True if key was there before else False)
         """
         try:
             return self[k], True
@@ -114,11 +116,9 @@ class NetCtx():
                 assert src.direction == PortType.INPUT, src
             else:
                 # source is child output port
-                try:
-                    assert self.parentNode is src.parentNode.parent, src
-                    assert src.direction == PortType.OUTPUT, src
-                except AssertionError as ex:
-                    raise
+                assert self.parentNode is src.parentNode.parent, src
+                assert src.direction == PortType.OUTPUT, src
+
             return self.drivers.append(src)
 
     def addEndpoint(self, dst):
@@ -133,12 +133,10 @@ class NetCtx():
                 # target is parent output port
                 assert dst.direction == PortType.INPUT, dst
             else:
-                try:
-                    # target is child input port
-                    assert self.parentNode is dst.parentNode.parent, dst
-                    assert dst.direction == PortType.INPUT, dst
-                except AssertionError:
-                    raise
+                # target is child input port
+                assert self.parentNode is dst.parentNode.parent, dst
+                assert dst.direction == PortType.INPUT, dst
+
             return self.endpoints.append(dst)
 
 
@@ -255,6 +253,7 @@ def isUselessTernary(op):
                 return bool(ifTrue) and not bool(ifFalse)
             except Exception:
                 pass
+
     return False
 
 
@@ -267,6 +266,7 @@ def isUselessEq(op: Operator):
                     return True
             except Exception:
                 pass
+
     return False
 
 
