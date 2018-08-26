@@ -32,14 +32,12 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
     stmPorts = {}
 
     # {RtlSignal: NetCtx}
-    netCtx = NetCtxs()
+    netCtx = NetCtxs(root)
 
     # create subunits
     for su in u._units:
         n = root.addNode(name=su._name, originObj=su)
         UnitToLNode(su, n, toL, optimizations)
-        for intf in su._interfaces:
-            addPortToLNode(n, intf)
 
     # create subunits from statements
     for stm in u._ctx.statements:
@@ -75,8 +73,6 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
             for d in s.drivers:
                 if isinstance(d, PortItem):
                     net.addDriver(toL[d])
-            # connectSignalToStatements(
-            #    s, toL, stmPorts, root, reducedStatements)
 
     netCtx.applyConnections(root)
 

@@ -18,6 +18,10 @@ from hwtGraph.elk.containers.lPort import LPort
 
 
 class NetCtxs(dict):
+    def __init__(self, parentNode):
+        dict.__init__(self)
+        self.parentNode = parentNode
+
     def applyConnections(self, root):
         seen = set()
         for sig, net in self.items():
@@ -87,6 +91,8 @@ class NetCtxs(dict):
 
 class NetCtx():
     def __init__(self, others: NetCtxs, actualKey):
+        self.parentNode = others.parentNode
+        assert isinstance(self.parentNode, LNode), self.parentNode
         self.actualKeys = [actualKey, ]
         self.others = others
         self.drivers = UniqList()
@@ -96,19 +102,44 @@ class NetCtx():
         self.drivers.extend(other.drivers)
         self.endpoints.extend(other.endpoints)
 
-    def addDriver(self, d):
-        # print("add d", self.actualKeys, d)
-        if isinstance(d, RtlSignalBase):
-            return self.others.joinNetsByKeyVal(d, self)
+    def addDriver(self, src):
+        if isinstance(src, RtlSignalBase):
+            return self.others.joinNetsByKeyVal(src, self)
         else:
-            return self.drivers.append(d)
+            if self.parentNode is src.parentNode:
+                # connection between input and output on nodes with same parent
+                assert src.direction == PortType.INPUT, src
+            elif self.parentNode.parent is src.parentNode:
+                # source is parent input port
+                assert src.direction == PortType.INPUT, src
+            else:
+                # source is child output port
+                try:
+                    assert self.parentNode is src.parentNode.parent, src
+                    assert src.direction == PortType.OUTPUT, src
+                except AssertionError as ex:
+                    raise
+            return self.drivers.append(src)
 
-    def addEndpoint(self, ep):
+    def addEndpoint(self, dst):
         # print("add e", self.actualKeys, ep)
-        if isinstance(ep, RtlSignalBase):
-            return self.others.joinNetsByValKey(self, ep)
+        if isinstance(dst, RtlSignalBase):
+            return self.others.joinNetsByValKey(self, dst)
         else:
-            return self.endpoints.append(ep)
+            if self.parentNode is dst.parentNode:
+                # connection between input and output on nodes with same parent
+                assert dst.direction == PortType.OUTPUT, dst
+            elif self.parentNode.parent is dst.parentNode:
+                # target is parent output port
+                assert dst.direction == PortType.INPUT, dst
+            else:
+                try:
+                    # target is child input port
+                    assert self.parentNode is dst.parentNode.parent, dst
+                    assert dst.direction == PortType.INPUT, dst
+                except AssertionError:
+                    raise
+            return self.endpoints.append(dst)
 
 
 def toStr(obj):
@@ -194,19 +225,33 @@ def addPortToLNode(ln: LNode, intf: Interface, reverseDirection=False):
     for _intf in intf._interfaces:
         _addPort(ln, p, _intf, reverseDirection=reverseDirection)
 
+    return p
+
 
 def addPort(n: LNode, intf: Interface):
     """
     Add LayoutExternalPort for interface
     """
+    isPortOfRoot = n.parent is None
     d = PortTypeFromDir(intf._direction)
-    ext_p = LayoutExternalPort(
-        n, intf._name, d, node2lnode=n._node2lnode)
-    ext_p.originObj = originObjOfPort(intf)
-    n.children.append(ext_p)
-    addPortToLNode(ext_p, intf, reverseDirection=True)
-
-    return ext_p
+    if isPortOfRoot:
+        ext_p = LayoutExternalPort(
+            n, intf._name, d, node2lnode=n._node2lnode)
+        ext_p.originObj = originObjOfPort(intf)
+        n.children.append(ext_p)
+        addPortToLNode(ext_p, intf, reverseDirection=True)
+        return ext_p
+    else:
+        nodePort = addPortToLNode(n, intf)
+        return nodePort
+        ## connect this node which represents port to port of this node
+        #if intf._direction == INTF_DIRECTION.SLAVE:
+        #    src = nodePort
+        #    dst = ext_p.addPort("", PortType.INPUT, PortSide.WEST)
+        #else:
+        #    src = ext_p.addPort("", PortType.OUTPUT, PortSide.EAST)
+        #    dst = nodePort
+        #n.addEdge(src, dst, name=repr(intf), originObj=intf)
 
 
 def getSinglePort(ports: List[LPort]) -> LEdge:

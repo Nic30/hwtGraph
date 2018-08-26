@@ -1,5 +1,4 @@
 from hwtGraph.elk.containers.constants import PortType
-from hwt.synthesizer.interfaceLevel.unitImplHelpers import getSignalName
 
 
 class LEdge():
@@ -25,6 +24,8 @@ class LEdge():
         assert isinstance(srcs, list) and len(srcs) >= 1, originObj
         assert isinstance(dsts, list) and len(dsts) >= 1, originObj
 
+        self.srcs = []
+        self.dsts = []
         for src in srcs:
             self.addSource(src, addToSrc=False)
         self.srcs = srcs
@@ -39,10 +40,18 @@ class LEdge():
 
     def addTarget(self, dst: "LPort", addToDst=True):
         if self.parentNode is dst.parentNode:
+            # connection between input and output on nodes with same parent
             assert dst.direction == PortType.OUTPUT, dst
-        else:
+        elif self.parentNode.parent is dst.parentNode:
+            # target is parent output port
             assert dst.direction == PortType.INPUT, dst
-
+        else:
+            try:
+                # target is child input port
+                assert self.parentNode is dst.parentNode.parent, dst
+                assert dst.direction == PortType.INPUT, dst
+            except AssertionError:
+                raise
         if addToDst:
             self.dsts.append(dst)
         dst.incomingEdges.append(self)
@@ -53,10 +62,18 @@ class LEdge():
 
     def addSource(self, src: "LPort", addToSrc=True):
         if self.parentNode is src.parentNode:
+            # connection between input and output on nodes with same parent
+            assert src.direction == PortType.INPUT, src
+        elif self.parentNode.parent is src.parentNode:
+            # source is parent input port
             assert src.direction == PortType.INPUT, src
         else:
-            assert src.direction == PortType.OUTPUT, src
-
+            # source is child output port
+            try:
+                assert self.parentNode is src.parentNode.parent, src
+                assert src.direction == PortType.OUTPUT, src
+            except AssertionError as ex:
+                raise 
         if addToSrc:
             self.srcs.append(src)
         src.outgoingEdges.append(self)

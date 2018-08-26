@@ -42,6 +42,7 @@ def convert(u):
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
     # import json
+    # from pprint import pprint
     # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
     #     json.dump(data, fp)
     # pprint(data)
@@ -181,7 +182,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    #suite.addTest(Conversibility_TC('test_AxiTester'))
+    #suite.addTest(Conversibility_TC('test_Axi_rDatapump'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

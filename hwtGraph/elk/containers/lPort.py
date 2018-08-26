@@ -86,7 +86,7 @@ class LPort():
         }
 
         if self.parentNode.portConstraints.isOrderFixed():
-            assert isinstance(self.index, int)
+            assert isinstance(self.index, int), self.index
             props["portIndex"] = self.index
 
         return {

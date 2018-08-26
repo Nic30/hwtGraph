@@ -83,7 +83,7 @@ class StatementRenderer():
         else:
             assert portCtx is not None
             self.node = node
-            self.netCtxs = NetCtxs()
+            self.netCtxs = NetCtxs(node)
 
     def addInputPort(self, node, name,
                      i: Union[Value, RtlSignalBase],
@@ -146,7 +146,6 @@ class StatementRenderer():
         oPort = node.addPort(name, PortType.OUTPUT, side)
         if out is not None:
             if isinstance(out, LPort):
-                raise NotImplementedError("[TODO]")
                 self.node.addEdge(oPort, out)
             elif out.hidden:
                 raise NotImplementedError("Hidden signals should not be connected to outside")

@@ -4,7 +4,7 @@ from typing import List, Generator
 from hwt.pyUtils.uniqList import UniqList
 
 from hwtGraph.elk.containers.constants import PortSide, PortType, \
-    NodeType, PortConstraints, LayerConstraint
+    NodeType, PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lPort import LPort
 
@@ -139,8 +139,6 @@ class LNode():
         }
         d = {
             "hwt": d_hwt,
-            "ports": [p.toElkJson(idStore)
-                      for p in self.iterPorts()],
             "properties": props
         }
         if self.bodyText is not None:
@@ -155,6 +153,8 @@ class LNode():
             self.toElkJson_registerNodes(idStore, isTop=isTop)
             self.toElkJson_registerPorts(idStore)
 
+        d["ports"] = [p.toElkJson(idStore)
+                      for p in self.iterPorts()]
         if self.children:
             nodes = []
             edges = UniqList()
@@ -194,15 +194,15 @@ class LayoutExternalPort(LNode):
             parent=parent, name=name, node2lnode=node2lnode)
         self.direction = direction
         self.type = NodeType.EXTERNAL_PORT
-        if direction == PortType.INPUT:
-            self.layeringLayerConstraint = LayerConstraint.FIRST
-        elif direction == PortType.OUTPUT:
-            self.layeringLayerConstraint = LayerConstraint.LAST
-        else:
-            raise ValueError(direction)
+        # if direction == PortType.INPUT:
+        #     self.layeringLayerConstraint = LayerConstraint.FIRST
+        # elif direction == PortType.OUTPUT:
+        #     self.layeringLayerConstraint = LayerConstraint.LAST
+        # else:
+        #     raise ValueError(direction)
 
     def toElkJson(self, idStore, isTop=True):
         d = super(LayoutExternalPort, self).toElkJson(idStore, isTop=isTop)
         d["hwt"]['isExternalPort'] = True
-        d['properties']["org.eclipse.elk.layered.layering.layerConstraint"] = self.layeringLayerConstraint.name
+        # d['properties']["org.eclipse.elk.layered.layering.layerConstraint"] = self.layeringLayerConstraint.name
         return d
