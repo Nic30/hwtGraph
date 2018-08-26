@@ -6,7 +6,10 @@ from hwtGraph.elk.containers.lNode import LNode
 
 from hwtGraph.elk.fromHwt.statementRenderer import StatementRenderer
 from hwtGraph.elk.fromHwt.statementRendererUtils import addStmAsLNode, VirtualLNode
-from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, NetCtxs
+from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, NetCtxs,\
+    originObjOfPort
+from hwt.hdl.constants import INTF_DIRECTION
+from hwtGraph.elk.containers.constants import PortType, PortSide
 
 
 def sortStatementPorts(root):
@@ -78,5 +81,22 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
 
     for opt in optimizations:
         opt(root)
+
+    isRootOfWholeGraph = root.parent is None
+    if not isRootOfWholeGraph:
+        for intf in u._interfaces:
+            # connect my external port to port on my container on parent
+            # also override toL to use this new port
+            ext_p = toL[originObjOfPort(intf)].parentNode
+            nodePort = addPortToLNode(root, intf)
+            # connect this node which represents port to port of this node
+            if intf._direction == INTF_DIRECTION.SLAVE:
+                src = nodePort
+                dst = ext_p.addPort("", PortType.INPUT, PortSide.WEST)
+            else:
+                src = ext_p.addPort("", PortType.OUTPUT, PortSide.EAST)
+                dst = nodePort
+
+            root.addEdge(src, dst, name=repr(intf), originObj=intf)
 
     return root

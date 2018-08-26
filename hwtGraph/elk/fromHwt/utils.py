@@ -232,26 +232,13 @@ def addPort(n: LNode, intf: Interface):
     """
     Add LayoutExternalPort for interface
     """
-    isPortOfRoot = n.parent is None
     d = PortTypeFromDir(intf._direction)
-    if isPortOfRoot:
-        ext_p = LayoutExternalPort(
-            n, intf._name, d, node2lnode=n._node2lnode)
-        ext_p.originObj = originObjOfPort(intf)
-        n.children.append(ext_p)
-        addPortToLNode(ext_p, intf, reverseDirection=True)
-        return ext_p
-    else:
-        nodePort = addPortToLNode(n, intf)
-        return nodePort
-        ## connect this node which represents port to port of this node
-        #if intf._direction == INTF_DIRECTION.SLAVE:
-        #    src = nodePort
-        #    dst = ext_p.addPort("", PortType.INPUT, PortSide.WEST)
-        #else:
-        #    src = ext_p.addPort("", PortType.OUTPUT, PortSide.EAST)
-        #    dst = nodePort
-        #n.addEdge(src, dst, name=repr(intf), originObj=intf)
+    ext_p = LayoutExternalPort(
+        n, intf._name, d, node2lnode=n._node2lnode)
+    ext_p.originObj = originObjOfPort(intf)
+    n.children.append(ext_p)
+    addPortToLNode(ext_p, intf, reverseDirection=True)
+    return ext_p
 
 
 def getSinglePort(ports: List[LPort]) -> LEdge:
