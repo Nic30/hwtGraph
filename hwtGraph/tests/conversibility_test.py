@@ -5,7 +5,8 @@ from hwt.interfaces.std import Signal
 from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
-from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, DEFAULT_LAYOUT_OPTIMIZATIONS
+from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM,\
+    DEFAULT_LAYOUT_OPTIMIZATIONS
 from hwtLib.amba.axi4_rDatapump import Axi_rDatapump
 from hwtLib.amba.axi4_streamToMem import Axi4streamToMem
 from hwtLib.amba.axi4_wDatapump import Axi_wDatapump
