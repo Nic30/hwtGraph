@@ -28,7 +28,7 @@ class Signal2stmPortCtx():
             else:
                 return p
 
-        n = p.getNode()
+        n = p.parentNode
         if p.direction == PortType.INPUT:
             return n.east[0]
         elif p.direction == PortType.OUTPUT:

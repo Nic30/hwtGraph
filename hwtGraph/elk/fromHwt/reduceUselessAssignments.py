@@ -1,7 +1,7 @@
 from hwt.hdl.assignment import Assignment
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.lNode import LNode
-from hwtGraph.elk.fromHwt.utils import getSinglePort, removeEdge
+from hwtGraph.elk.fromHwt.utils import getSinglePort
 
 
 def reduceUselessAssignments(root: LNode):
@@ -44,7 +44,7 @@ def reduceUselessAssignments(root: LNode):
                 edgesToRemove.append(e)
 
             for e in edgesToRemove:
-                removeEdge(e)
+                e.remove()
 
             for srcPort, originObj in srcPorts:
                 for dstPort in dstPorts:

@@ -38,7 +38,7 @@ def connectSignalToStatements(s, toL, stmPorts, root, reducedStatements):
         else:
             src = stmPorts[node].getOutside(s)
 
-        assert src.getNode().parent == root, (s, node)
+        assert src.parentNode.parent == root, (s, node)
         driverPorts.add(src)
 
     for stm in s.endpoints:
@@ -51,6 +51,4 @@ def connectSignalToStatements(s, toL, stmPorts, root, reducedStatements):
     if not (driverPorts and endpointPorts):
         print("Warning signal endpoints/drivers not discovered", s)
 
-    for src in driverPorts:
-        for dst in endpointPorts:
-            root.addEdge(src, dst, name=s.name, originObj=s)
+    root.addHyperEdge(list(driverPorts), list(endpointPorts), name=s.name, originObj=s)

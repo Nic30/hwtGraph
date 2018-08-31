@@ -9,15 +9,15 @@ from hwt.hdl.switchContainer import SwitchContainer
 from hwt.hdl.types.array import HArray
 from hwt.hdl.value import Value
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
-from hwt.synthesizer.rtlLevel.netlist import walk_assignments
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
 from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig
-from hwtGraph.elk.fromHwt.utils import ValueAsLNode,\
+from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq, NetCtxs, NetCtx
-
+from hwt.pyUtils.arrayQuery import arr_any
+from itertools import chain
 
 FF = "FF"
 MUX = "MUX"
@@ -39,7 +39,36 @@ CONNECTION = "CONNECTION"
 #
 
 
+def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
+    """
+    Detect RAM ports in If statement
+
+    :param stm: statement to detect the ram ports in
+    :param current_en: curent en/clk signal
+    """
+    if stm.ifFalse or stm.elIfs:
+        return
+    for _stm in stm.ifTrue:
+        if isinstance(_stm, IfContainer):
+            yield from detectRamPorts(_stm, _stm.cond & current_en)
+        elif isinstance(_stm, Assignment):
+            if isinstance(_stm.dst._dtype, HArray):
+                assert len(_stm.indexes) == 1, "one address per RAM port"
+                w_addr = _stm.indexes[0]
+                mem = _stm.dst
+                yield (RAM_WRITE, mem, w_addr, current_en, _stm.src)
+            elif _stm.src.hidden and len(_stm.src.drivers) == 1:
+                op = _stm.src.drivers[0]
+                mem = op.operands[0]
+                if isinstance(mem._dtype, HArray) and op.operator == AllOps.INDEX:
+                    r_addr = op.operands[1]
+                    if _stm.indexes:
+                        raise NotImplementedError()
+                    yield (RAM_READ, mem, r_addr, current_en, _stm.dst)
+
+
 class StatementRenderer():
+
     def __init__(self, node: LNode, toL, portCtx, rootNetCtxs):
         self.stm = node.originObj
         self.toL = toL
@@ -48,31 +77,68 @@ class StatementRenderer():
         self.isVirtual = isinstance(node, VirtualLNode)
 
         if self.isVirtual:
+            assert portCtx is None
             self.node = node.parent
             self.netCtxs = rootNetCtxs
         else:
+            assert portCtx is not None
             self.node = node
-            self.netCtxs = NetCtxs()
+            self.netCtxs = NetCtxs(node)
 
     def addInputPort(self, node, name,
-                     inpValue: Union[Value, RtlSignalBase],
+                     i: Union[Value, RtlSignalBase],
                      side=PortSide.WEST):
         """
         Add and connect input port on subnode
+
+        :param node: node where to add input port
+        :param name: name of newly added port
+        :param i: input value
+        :param side: side where input port should be added 
         """
         root = self.node
         port = node.addPort(name, PortType.INPUT, side)
-        if isinstance(inpValue, Value):
-            v = ValueAsLNode(root, inpValue).east[0]
-            root.addEdge(v, port)
+        netCtxs = self.netCtxs
+
+        if isinstance(i, LPort):
+            root.addEdge(i, port)
+        elif isConst(i):
+            i = i.staticEval()
+            c, wasThereBefore = self.netCtxs.getDefault(i)
+            if not wasThereBefore:
+                v = ValueAsLNode(root, i).east[0]
+                c.addDriver(v)
+            c.addEndpoint(port)
+        elif i.hidden:
+            # later connect driver of this signal to output port
+            ctx, wasThereBefore = netCtxs.getDefault(i)
+            if not wasThereBefore:
+                self.lazyLoadNet(i)
+            ctx.addEndpoint(port)
         else:
-            if isinstance(inpValue, LPort):
-                root.addEdge(inpValue, port)
+            portCtx = self.portCtx
+            rootCtx, _ = self.rootNetCtxs.getDefault(i)
+
+            if self.isVirtual:
+                # later connect signal in root to input port or input port of
+                # wrap node
+                rootCtx.addEndpoint(port)
             else:
-                self.connectInput(inpValue, port)
+                # spot input port on this wrap node if required
+                isNewlySpotted = (i, PortType.INPUT) not in portCtx.data
+                src = portCtx.register(i, PortType.INPUT)
+                # connect input port on wrap node with specified output port
+                ctx, _ = netCtxs.getDefault(i)
+                ctx.addDriver(src)
+                ctx.addEndpoint(port)
+
+                if isNewlySpotted:
+                    # get input port from parent view
+                    _port = portCtx.getOutside(i, PortType.INPUT)
+                    rootCtx.addEndpoint(_port)
 
     def addOutputPort(self, node: LNode, name: str,
-                      out: Optional[RtlSignalBase],
+                      out: Optional[Union[RtlSignalBase, LPort]],
                       side=PortSide.EAST):
         """
         Add and connect output port on subnode
@@ -82,17 +148,22 @@ class StatementRenderer():
             if isinstance(out, LPort):
                 self.node.addEdge(oPort, out)
             elif out.hidden:
-                raise NotImplementedError()
+                raise NotImplementedError("Hidden signals should not be connected to outside")
+            elif self.isVirtual:
+                # This node is inlined inside of parent.
+                # Mark that this output of subnode should be connected
+                # to output of parent node.
+                print(out)
+                ctx, _ = self.netCtxs.getDefault(out)
+                ctx.addDriver(oPort)
             else:
-                if self.portCtx is None:
-                    ctx, _ = self.rootNetCtxs.getDefault(out)
-                    ctx.addDriver(oPort)
-                else:
-                    _out = self.portCtx.getInside(out, PortType.OUTPUT)
-                    self.node.addEdge(oPort, _out)
-                    ooPort = self.portCtx.getOutside(out, PortType.OUTPUT)
-                    ctx, _ = self.rootNetCtxs.getDefault(out)
-                    ctx.addDriver(ooPort)
+                # connect my signal to my output port
+                _out = self.portCtx.getInside(out, PortType.OUTPUT)
+                self.node.addEdge(oPort, _out, originObj=out)
+                # mark connection of output port to parent net
+                ooPort = self.portCtx.getOutside(out, PortType.OUTPUT)
+                ctx, _ = self.rootNetCtxs.getDefault(out)
+                ctx.addDriver(ooPort)
 
         return oPort
 
@@ -119,7 +190,7 @@ class StatementRenderer():
                           addr: RtlSignalBase,
                           out: RtlSignalBase,
                           connectOut):
-        n = self.node.addNode(RAM_WRITE)
+        n = self.node.addNode(RAM_READ)
         if clk is not None:
             self.addInputPort(n, "clk", clk)
 
@@ -210,40 +281,6 @@ class StatementRenderer():
         else:
             return None, assig.src
 
-    def connectInput(self, signal: RtlSignalBase, port: LPort):
-        """
-        :param signal: signal to connect to specified port
-        :param port: input port which should be connected with specified signal
-        """
-        netCtxs = self.netCtxs
-        if signal.hidden:
-            # later connect driver of this signal to output port
-            ctx, wasThereBefore = netCtxs.getDefault(signal)
-            if not wasThereBefore:
-                self.lazyLoadNet(signal)
-            ctx.addEndpoint(port)
-        else:
-            portCtx = self.portCtx
-            rootCtx, _ = self.rootNetCtxs.getDefault(signal)
-
-            if portCtx is None:
-                # later connect signal in root to input port or input port of
-                # wrap node
-                rootCtx.addEndpoint(port)
-            else:
-                # spot input port on this wrap node if required
-                isNewlySpotted = (signal, PortType.INPUT) not in portCtx.data
-                src = portCtx.register(signal, PortType.INPUT)
-                # connect input port on wrap node with specified output port
-                ctx, _ = netCtxs.getDefault(signal)
-                ctx.addDriver(src)
-                ctx.addEndpoint(port)
-
-                if isNewlySpotted:
-                    # get input port from parent view
-                    _port = portCtx.getOutside(signal, PortType.INPUT)
-                    rootCtx.addEndpoint(_port)
-
     def getInputNetCtx(self, signal: RtlSignalBase):
         netCtxs = self.netCtxs
         if signal.hidden:
@@ -257,7 +294,7 @@ class StatementRenderer():
             ctx, _ = netCtxs.getDefault(signal)
             rootCtx, _ = self.rootNetCtxs.getDefault(signal)
 
-            if portCtx is not None:
+            if not self.isVirtual:
                 # spot input port on this wrap node if required
                 isNewlySpotted = (signal, PortType.INPUT) not in portCtx.data
                 src = portCtx.register(signal, PortType.INPUT)
@@ -314,14 +351,7 @@ class StatementRenderer():
         u.addPort(None, PortType.OUTPUT, PortSide.EAST)
 
         for inpName, op in zip(inputNames, op.operands):
-            p = u.addPort(inpName,  PortType.INPUT,  PortSide.WEST)
-
-            if isConst(op):
-                op = op.staticEval()
-                v = ValueAsLNode(root, op).east[0]
-                root.addEdge(v, p)
-            else:
-                self.connectInput(op, p)
+            self.addInputPort(u, inpName, op)
 
         return u
 
@@ -337,9 +367,31 @@ class StatementRenderer():
 
         # walk statements and render muxs and memories
         for o in stm._outputs:
-            if portCtx is not None:
+            if not self.isVirtual:
                 portCtx.register(o, PortType.OUTPUT)
-            self.renderForSignal(stm, o, True)
+
+        canHaveRamPorts = arr_any(chain(stm._inputs, stm._outputs),
+                                  lambda s: isinstance(s._dtype, HArray))
+        # render RAM ports
+        consumedOutputs = set()
+        if canHaveRamPorts:
+            for pType, memSig, addrSig, enSig, io in detectRamPorts(stm, stm.cond):
+                if pType == RAM_READ:
+                    self.createRamReadNode(memSig, enSig, addrSig,
+                                           io, True)
+                    consumedOutputs.add(io)
+
+                elif pType == RAM_WRITE:
+                    self.createRamWriteNode(memSig, enSig, addrSig,
+                                            io, True)
+                    consumedOutputs.add(memSig)
+
+                else:
+                    raise TypeError()
+
+        for o in stm._outputs:
+            if o not in consumedOutputs:
+                self.renderForSignal(stm, o, True)
 
         if not self.isVirtual:
             self.netCtxs.applyConnections(self.node)
@@ -417,17 +469,7 @@ class StatementRenderer():
 
         # render IfContainer instances
         if isinstance(stm, IfContainer):
-            if isinstance(s._dtype, HArray):
-                # ram output port
-                # [TODO]
-                clk = stm.cond
-                for a in walk_assignments(stm, s):
-                    assert len(a.indexes) == 1, "one address per RAM port"
-                    addr = a.indexes[0]
-                return self.createRamWriteNode(s, clk, addr,
-                                               a.src, connectOut)
-
-            elif full_ev_dep and not parent_ev_dep:
+            if full_ev_dep and not parent_ev_dep:
                 # FF with optional MUX
                 return self.renderEventDepIfContainer(stm, s, connectOut)
 
@@ -456,7 +498,7 @@ class StatementRenderer():
 
         # render SwitchContainer instances
         elif isinstance(stm, SwitchContainer):
-            latched = s in encl
+            latched = s not in encl
             inputs = []
             for _, stms in stm.cases:
                 inputs.append(self.renderForSignal(stms, s, False)[1])

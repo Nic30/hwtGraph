@@ -5,7 +5,8 @@ from hwt.interfaces.std import Signal
 from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
-from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, DEFAULT_LAYOUT_OPTIMIZATIONS
+from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM,\
+    DEFAULT_LAYOUT_OPTIMIZATIONS
 from hwtLib.amba.axi4_rDatapump import Axi_rDatapump
 from hwtLib.amba.axi4_streamToMem import Axi4streamToMem
 from hwtLib.amba.axi4_wDatapump import Axi_wDatapump
@@ -20,11 +21,11 @@ from hwtLib.logic.crc import Crc
 from hwtLib.logic.crcComb import CrcComb
 from hwtLib.logic.segment7 import Segment7
 from hwtLib.mem.cam import Cam
-from hwtLib.mem.clkSynchronizer import ClkSynchronizer
+from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
 from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
-from hwtLib.samples.ipCoreCompatibleWrap import ArrayIntfExample
+from hwtLib.samples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.samples.mem.reg import Latch
 from hwtLib.samples.operators.indexing import IndexingInernJoin,\
     IndexingInernRangeSplit, IndexingInernSplit
@@ -41,12 +42,17 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
+    # import json
+    # from pprint import pprint
+    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+    #     json.dump(data, fp)
+    # pprint(data)
     return g, data
 
 
 class DirectFF_sig(Unit):
     def _declr(self):
-        self.o = Signal()
+        self.o = Signal()._m()
         self.clk = Signal()
 
     def _impl(self):
@@ -177,7 +183,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_DirectFF_sig'))
+    # suite.addTest(Conversibility_TC('test_Axi_rDatapump'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

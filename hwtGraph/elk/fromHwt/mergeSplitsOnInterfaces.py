@@ -5,7 +5,6 @@ from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
-from hwtGraph.elk.fromHwt.utils import removeEdge
 
 
 class PortConnectionCtx(list):
@@ -61,7 +60,7 @@ def _copyPort(port: LPort, targetParent: Union[LPort], reverseDirection):
         d = PortType.opposite(d)
         side = PortSide.opposite(side)
 
-    newP = LPort(targetParent.getNode(), d, side, name=port.name)
+    newP = LPort(targetParent.parentNode, d, side, name=port.name)
     if isinstance(targetParent, LPort):
         targetParent.children.append(newP)
         newP.parent = targetParent
@@ -141,7 +140,7 @@ def reconnectPorts(root: LNode, srcPort: LPort,
         # reconnect edge from src port to split node
         assert (e.src is mainPort and e.dstNode is oldSplitNode)\
             or (e.dst is mainPort and e.srcNode is oldSplitNode), e
-        removeEdge(e)
+        e.remove()
 
         _newSplitPorts = [next(p) for p in newSplitPorts]
         # reconnect part from split node to other target nodes
@@ -152,7 +151,7 @@ def reconnectPorts(root: LNode, srcPort: LPort,
             for oldP, newP in zip(oldSplitNode.west, _newSplitPorts):
                 for e in list(oldP.incomingEdges):
                     root.addEdge(e.src, newP, originObj=e.originObj)
-                    removeEdge(e)
+                    e.remove()
 
         elif oldSplitNode.name == "SLICE":
             root.addEdge(mainPort, splitInp,
@@ -161,7 +160,7 @@ def reconnectPorts(root: LNode, srcPort: LPort,
             for oldP, newP in zip(oldSplitNode.east, reversed(_newSplitPorts)):
                 for e in list(oldP.outgoingEdges):
                     root.addEdge(newP, e.dst, originObj=e.originObj)
-                    removeEdge(e)
+                    e.remove()
         else:
             raise ValueError(oldSplitNode)
 
@@ -178,23 +177,25 @@ def mergeSplitsOnInterfaces(root: LNode):
 
     ctx = MergeSplitsOnInterfacesCtx()
     for ch in root.children:
-        srcPort = None
+        srcPorts = None
         try:
             if ch.name == "CONCAT":
                 p = single(ch.east, lambda x: True)
                 e = single(p.outgoingEdges, lambda x: True)
-                srcPort = e.dst
+                srcPorts = e.dsts
             elif ch.name == "SLICE":
                 p = single(ch.west, lambda x: True)
                 e = single(p.incomingEdges, lambda x: True)
-                srcPort = e.src
+                srcPorts = e.srcs
         except (DuplicitValueExc, NoValueExc):
             continue
 
-        if srcPort is not None and isinstance(srcPort.parent, LPort):
-            # only for non primitive ports
-            rootPort = getRootIntfPort(srcPort)
-            ctx.register(rootPort, ch, e)
+        if srcPorts is not None:
+            for srcPort in srcPorts:
+                if isinstance(srcPort.parent, LPort):
+                    # only for non primitive ports
+                    rootPort = getRootIntfPort(srcPort)
+                    ctx.register(rootPort, ch, e)
 
     # join them if it is possible
     for srcPort, splitsAndConcats in ctx.iterPortSplits():

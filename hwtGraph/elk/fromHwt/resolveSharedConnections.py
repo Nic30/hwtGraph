@@ -132,11 +132,26 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
         return ch_cnt
 
     elif not inEdges and not outEdges:
+        # this port is not connected, just check if it expected state
         if port.direction == PortType.INPUT:
-            print("Warning", port, "not connected")
+            if port.originObj is not None:
+                assert not port.originObj.src.drivers, port.originObj
+            else:
+                print("Warning", port, "not connected")
         return 0
     else:
-        if len(inEdges) + len(outEdges) != 1:
+        connectedElemCnt = 0
+        for e in inEdges:
+            connectedElemCnt += len(e.srcs)
+            if connectedElemCnt > 1:
+                return 0
+
+        for e in outEdges:
+            connectedElemCnt += len(e.dsts)
+            if connectedElemCnt > 1:
+                return 0
+
+        if connectedElemCnt != 1:
             return 0
 
         if inEdges:
@@ -145,14 +160,15 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
             e = outEdges[0]
 
         # if is connected to different port
-        if e.src.name != e.dst.name:
+        if e.srcs[0].name != e.dsts[0].name:
             return 0
 
-        if e.src is port:
-            p = e.dst.parent
+        if e.srcs[0] is port:
+            p = e.dsts[0].parentNode
         else:
-            assert e.dst is port
-            p = e.src.parent
+            # (can be hyperedge and then this does not have to be)
+            # assert e.dsts[0] is port, (e, port)
+            p = e.srcs[0].parentNode
 
         # if is part of interface which can be reduced
         if not isinstance(p, LNode):

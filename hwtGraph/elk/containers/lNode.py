@@ -3,8 +3,8 @@ from typing import List, Generator
 
 from hwt.pyUtils.uniqList import UniqList
 
-from hwtGraph.elk.containers.constants import PortSide, PortType,\
-    NodeType, PortConstraints, LayerConstraint
+from hwtGraph.elk.containers.constants import PortSide, PortType, \
+    NodeType, PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lPort import LPort
 
@@ -25,7 +25,7 @@ class LNode():
         (if it is not only container of children)
     """
 
-    def __init__(self, parent: "LNode"=None, name: str= None,
+    def __init__(self, parent: "LNode"=None, name: str=None,
                  originObj=None, node2lnode=None, bodyText=None):
         super(LNode, self).__init__()
         if name is not None:
@@ -92,12 +92,18 @@ class LNode():
         return n
 
     def iterEdges(self, filterSelfLoops=False):
+        """
+        Iter edges connected from outside of this unit
+        """
         for p in self.iterPorts():
             yield from p.iterEdges(filterSelfLoops=filterSelfLoops)
 
     def addEdge(self, src: LPort, dst: LPort, name=None, originObj=None):
-        e = LEdge(self, name, originObj=originObj)
-        e.setSrcDst(src, dst)
+        e = LEdge(self, [src], [dst], name=name, originObj=originObj)
+        return e
+
+    def addHyperEdge(self, srcs, dsts, name=None, originObj=None):
+        e = LEdge(self, srcs, dsts, name=name, originObj=originObj)
         return e
 
     def toElkJson_registerNodes(self, idStore, isTop=False):
@@ -122,21 +128,21 @@ class LNode():
         for ch in self.children:
             ch.toElkJson_registerPorts(idStore)
 
-    def toElkJson(self, idStore, isTop=True):
+    def toElkJson(self, idStore: "ElkIdStore", isTop=True):
         props = {
             "org.eclipse.elk.portConstraints": self.portConstraints.name,
             'org.eclipse.elk.randomSeed': 0,
             'org.eclipse.elk.layered.mergeEdges': 1,
         }
-
-        d = {
+        d_hwt = {
             "name": self.name,
-            "ports": [p.toElkJson(idStore)
-                      for p in self.iterPorts()],
+        }
+        d = {
+            "hwt": d_hwt,
             "properties": props
         }
         if self.bodyText is not None:
-            d["bodyText"] = self.bodyText
+            d_hwt["bodyText"] = self.bodyText
 
         if not isTop:
             d["id"] = str(idStore[self])
@@ -147,16 +153,14 @@ class LNode():
             self.toElkJson_registerNodes(idStore, isTop=isTop)
             self.toElkJson_registerPorts(idStore)
 
+        d["ports"] = [p.toElkJson(idStore)
+                      for p in self.iterPorts()]
         if self.children:
             nodes = []
             edges = UniqList()
             for ch in self.children:
                 for e in ch.iterEdges():
-                    p1 = e.srcNode.parent
-                    p2 = e.dstNode.parent
-                    if ((p1 is self and p2 is self) or
-                            (e.srcNode is self and p2 is self) or
-                            (p1 is self and e.dstNode is self)):
+                    if e.parentNode is self:
                         edges.append(e)
 
             for ch in self.children:
@@ -167,7 +171,10 @@ class LNode():
 
             for e in edges:
                 idStore.registerEdge(e)
+
             d["edges"] = [e.toElkJson(idStore) for e in edges]
+
+        d_hwt["maxId"] = idStore.getMaxId()
 
         return d
 
@@ -180,22 +187,22 @@ class LNode():
 
 
 class LayoutExternalPort(LNode):
+
     def __init__(self, parent: "LNode", name: str=None,
                  direction=None, node2lnode=None):
         super(LayoutExternalPort, self).__init__(
             parent=parent, name=name, node2lnode=node2lnode)
         self.direction = direction
         self.type = NodeType.EXTERNAL_PORT
-        if direction == PortType.INPUT:
-            self.layeringLayerConstraint = LayerConstraint.FIRST
-        elif direction == PortType.OUTPUT:
-            self.layeringLayerConstraint = LayerConstraint.LAST
-        else:
-            raise ValueError(direction)
+        # if direction == PortType.INPUT:
+        #     self.layeringLayerConstraint = LayerConstraint.FIRST
+        # elif direction == PortType.OUTPUT:
+        #     self.layeringLayerConstraint = LayerConstraint.LAST
+        # else:
+        #     raise ValueError(direction)
 
     def toElkJson(self, idStore, isTop=True):
         d = super(LayoutExternalPort, self).toElkJson(idStore, isTop=isTop)
-        del d['name']
-        d['properties']["org.eclipse.elk.layered.layering.layerConstraint"] = self.layeringLayerConstraint.name
-        d['isExternalPort'] = True
+        d["hwt"]['isExternalPort'] = True
+        # d['properties']["org.eclipse.elk.layered.layering.layerConstraint"] = self.layeringLayerConstraint.name
         return d

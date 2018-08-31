@@ -27,6 +27,11 @@ class LPort():
         super(LPort, self).__init__()
         self.originObj = None
         self.parent = parent
+        if isinstance(parent, LPort):
+            self.parentNode = parent.parentNode
+        else:
+            self.parentNode = parent
+
         self.name = name
         self.direction = direction
 
@@ -35,13 +40,6 @@ class LPort():
         self.children = []
         self.side = side
         self.index = None
-
-    def getNode(self):
-        p = self
-        while True:
-            p = p.parent
-            if not isinstance(p, LPort):
-                return p
 
     def getLevel(self):
         """
@@ -87,15 +85,17 @@ class LPort():
             "portSide": self.side.name,
         }
 
-        if self.getNode().portConstraints.isOrderFixed():
-            assert isinstance(self.index, int)
+        if self.parentNode.portConstraints.isOrderFixed():
+            assert isinstance(self.index, int), self.index
             props["portIndex"] = self.index
 
         return {
             "id": str(idStore[self]),
-            "name": self.name,
+            "hwt": {
+                "level": self.getLevel(),
+                "name": self.name,
+            },
             "direction": self.direction.name,
-            "level": self.getLevel(),
             "properties": props,
         }
 

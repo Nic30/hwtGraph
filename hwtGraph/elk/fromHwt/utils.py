@@ -2,7 +2,7 @@ from typing import Union, List
 
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.constants import INTF_DIRECTION
-from hwt.hdl.operator import Operator
+from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
 from hwt.hdl.portItem import PortItem
 from hwt.hdl.types.defs import BIT
@@ -11,18 +11,36 @@ from hwt.pyUtils.uniqList import UniqList
 from hwt.serializer.hwt.serializer import HwtSerializer
 from hwt.synthesizer.interface import Interface
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
-from hwtGraph.elk.containers.constants import PortType, PortSide, PortConstraints
+from hwtGraph.elk.containers.constants import PortType, PortSide,\
+    PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
 
 
 class NetCtxs(dict):
+    def __init__(self, parentNode):
+        dict.__init__(self)
+        self.parentNode = parentNode
+
     def applyConnections(self, root):
-        for net in set(self.values()):
-            for src in net.drivers:
-                for dst in net.endpoints:
-                    root.addEdge(src, dst)
+        seen = set()
+        for sig, net in self.items():
+            if net in seen:
+                continue
+            seen.add(net)
+
+            if net.endpoints:
+                assert net.drivers
+
+            if not net.endpoints:
+                # unconnected input or constant which was replaced by value
+                assert not sig.endpoints\
+                       or isConst(sig), sig
+                continue
+
+            root.addHyperEdge(list(net.drivers), list(net.endpoints),
+                              name=repr(sig), originObj=sig)
 
     def joinNetsByKey(self, k0, k1):
         v0, _ = self.getDefault(k0)
@@ -63,6 +81,9 @@ class NetCtxs(dict):
         return v0
 
     def getDefault(self, k):
+        """
+        :return: tuple (value, True if key was there before else False)
+        """
         try:
             return self[k], True
         except KeyError:
@@ -72,6 +93,8 @@ class NetCtxs(dict):
 
 class NetCtx():
     def __init__(self, others: NetCtxs, actualKey):
+        self.parentNode = others.parentNode
+        assert isinstance(self.parentNode, LNode), self.parentNode
         self.actualKeys = [actualKey, ]
         self.others = others
         self.drivers = UniqList()
@@ -81,17 +104,40 @@ class NetCtx():
         self.drivers.extend(other.drivers)
         self.endpoints.extend(other.endpoints)
 
-    def addDriver(self, d):
-        if isinstance(d, RtlSignalBase):
-            return self.others.joinNetsByKeyVal(d, self)
+    def addDriver(self, src):
+        if isinstance(src, RtlSignalBase):
+            return self.others.joinNetsByKeyVal(src, self)
         else:
-            return self.drivers.append(d)
+            if self.parentNode is src.parentNode:
+                # connection between input and output on nodes with same parent
+                assert src.direction == PortType.INPUT, src
+            elif self.parentNode.parent is src.parentNode:
+                # source is parent input port
+                assert src.direction == PortType.INPUT, src
+            else:
+                # source is child output port
+                assert self.parentNode is src.parentNode.parent, src
+                assert src.direction == PortType.OUTPUT, src
 
-    def addEndpoint(self, ep):
-        if isinstance(ep, RtlSignalBase):
-            return self.others.joinNetsByValKey(self, ep)
+            return self.drivers.append(src)
+
+    def addEndpoint(self, dst):
+        # print("add e", self.actualKeys, ep)
+        if isinstance(dst, RtlSignalBase):
+            return self.others.joinNetsByValKey(self, dst)
         else:
-            return self.endpoints.append(ep)
+            if self.parentNode is dst.parentNode:
+                # connection between input and output on nodes with same parent
+                assert dst.direction == PortType.OUTPUT, dst
+            elif self.parentNode.parent is dst.parentNode:
+                # target is parent output port
+                assert dst.direction == PortType.INPUT, dst
+            else:
+                # target is child input port
+                assert self.parentNode is dst.parentNode.parent, dst
+                assert dst.direction == PortType.INPUT, dst
+
+            return self.endpoints.append(dst)
 
 
 def toStr(obj):
@@ -177,6 +223,8 @@ def addPortToLNode(ln: LNode, intf: Interface, reverseDirection=False):
     for _intf in intf._interfaces:
         _addPort(ln, p, _intf, reverseDirection=reverseDirection)
 
+    return p
+
 
 def addPort(n: LNode, intf: Interface):
     """
@@ -188,19 +236,12 @@ def addPort(n: LNode, intf: Interface):
     ext_p.originObj = originObjOfPort(intf)
     n.children.append(ext_p)
     addPortToLNode(ext_p, intf, reverseDirection=True)
-
     return ext_p
 
 
 def getSinglePort(ports: List[LPort]) -> LEdge:
     assert len(ports) == 1, ports
     return ports[0]
-
-
-def removeEdge(edge: LEdge):
-    edge.dst.incomingEdges.remove(edge)
-    edge.src.outgoingEdges.remove(edge)
-    edge.dst = edge.dstNode = edge.src = edge.srcNode = None
 
 
 def isUselessTernary(op):
@@ -212,6 +253,7 @@ def isUselessTernary(op):
                 return bool(ifTrue) and not bool(ifFalse)
             except Exception:
                 pass
+
     return False
 
 
@@ -224,6 +266,7 @@ def isUselessEq(op: Operator):
                     return True
             except Exception:
                 pass
+
     return False
 
 

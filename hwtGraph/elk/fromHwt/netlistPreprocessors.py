@@ -3,6 +3,9 @@ from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import isConst, Operator
 from hwt.hdl.operatorDefs import AllOps
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
+from hwt.pyUtils.arrayQuery import arr_all
+from hwt.hdl.types.array import HArray
+from hwt.hdl.statements import HdlStatement
 
 
 def indexedAssignmentsToConcatenation(netlist):
@@ -42,8 +45,14 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
         s = openset.pop()
         for ep in s.endpoints:
             # search for index ops
-            if isinstance(ep, Operator) and ep.operator == AllOps.INDEX and ep.operands[0] is s:
-                if ep.result.hidden:
+            if isinstance(ep, Operator)\
+                    and ep.operator == AllOps.INDEX\
+                    and ep.operands[0] is s:
+                isIndexInBramWrite = isinstance(s._dtype, HArray)\
+                    and arr_all(ep.result.endpoints,
+                                lambda ep: isinstance(ep, HdlStatement)\
+                                           and ep._is_completly_event_dependent)
+                if not isIndexInBramWrite and ep.result.hidden:
                     epsToReplace.append(ep)
 
         for ep in epsToReplace:
