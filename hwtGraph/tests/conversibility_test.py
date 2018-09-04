@@ -5,7 +5,7 @@ from hwt.interfaces.std import Signal
 from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
-from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM,\
+from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
     DEFAULT_LAYOUT_OPTIMIZATIONS
 from hwtLib.amba.axi4_rDatapump import Axi_rDatapump
 from hwtLib.amba.axi4_streamToMem import Axi4streamToMem
@@ -27,7 +27,7 @@ from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
 from hwtLib.samples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.samples.mem.reg import Latch
-from hwtLib.samples.operators.indexing import IndexingInernJoin,\
+from hwtLib.samples.operators.indexing import IndexingInernJoin, \
     IndexingInernRangeSplit, IndexingInernSplit
 from hwtLib.samples.showcase0 import Showcase0
 from hwtLib.samples.statements.constDriver import ConstDriverUnit
@@ -35,6 +35,8 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
+from build.lib.hwtLib.amba.axis import AxiStream
+from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
 
 
 def convert(u):
@@ -51,6 +53,7 @@ def convert(u):
 
 
 class DirectFF_sig(Unit):
+
     def _declr(self):
         self.o = Signal()._m()
         self.clk = Signal()
@@ -64,6 +67,7 @@ class DirectFF_sig(Unit):
 
 
 class Conversibility_TC(unittest.TestCase):
+
     def test_ArrayBuff_writer(self):
         u = ArrayBuff_writer()
         convert(u)
@@ -180,10 +184,19 @@ class Conversibility_TC(unittest.TestCase):
         u = DirectFF_sig()
         convert(u)
 
+    def test_SimpleUnitAxiStream(self):
+        u = SimpleUnitAxiStream()
+        g = convert(u)
+        root = g[0]
+        # interface is merged to only single connection
+        self.assertEqual(len(root.children), 2)
+        self.assertEqual(len(root.children[0].east), 1)
+        self.assertEqual(len(root.children[1].west), 1)
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_Axi_rDatapump'))
+    # suite.addTest(Conversibility_TC('test_SimpleUnitAxiStream'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

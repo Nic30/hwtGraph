@@ -34,11 +34,14 @@ def portTryReduce(root: LNode, port: LPort):
     on_target_children_to_destroy = set()
     for child, edge in children_edge_to_destroy:
         if child.direction == PortType.OUTPUT:
-            target_ch = edge.dst
+            target_ch = edge.dsts
         elif child.direction == PortType.INPUT:
-            target_ch = edge.src
+            target_ch = edge.srcs
         else:
             raise ValueError(child.direction)
+        if len(target_ch) != 1:
+            raise NotImplementedError("multiple connected nodes", target_ch)
+        target_ch = target_ch[0]
 
         try:
             assert target_ch.parent is new_target, (
@@ -50,19 +53,13 @@ def portTryReduce(root: LNode, port: LPort):
                   "\n", target_ch.parent, "\n", new_target)
             raise
 
-        for p in (child, target_ch):
-            removed = False
-            try:
-                p.incomingEdges.remove(edge)
-                removed = True
-            except ValueError:
-                pass
-            try:
-                p.outgoingEdges.remove(edge)
-                removed = True
-            except ValueError:
-                pass
-            assert removed
+        if child.direction == PortType.OUTPUT:
+            edge.removeTarget(target_ch)
+        elif child.direction == PortType.INPUT:
+            edge.removeTarget(child)
+
+        if not edge.srcs or not edge.dsts:
+            edge.remove()
 
         if not target_ch.incomingEdges and not target_ch.outgoingEdges:
             # disconnect selected children from this port and target
@@ -164,11 +161,11 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
             return 0
 
         if e.srcs[0] is port:
-            p = e.dsts[0].parentNode
+            p = e.dsts[0].parent
         else:
             # (can be hyperedge and then this does not have to be)
             # assert e.dsts[0] is port, (e, port)
-            p = e.srcs[0].parentNode
+            p = e.srcs[0].parent
 
         # if is part of interface which can be reduced
         if not isinstance(p, LNode):
