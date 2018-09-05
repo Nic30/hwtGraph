@@ -11,7 +11,7 @@ from hwt.pyUtils.uniqList import UniqList
 from hwt.serializer.hwt.serializer import HwtSerializer
 from hwt.synthesizer.interface import Interface
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
-from hwtGraph.elk.containers.constants import PortType, PortSide,\
+from hwtGraph.elk.containers.constants import PortType, PortSide, \
     PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
@@ -19,6 +19,7 @@ from hwtGraph.elk.containers.lPort import LPort
 
 
 class NetCtxs(dict):
+
     def __init__(self, parentNode):
         dict.__init__(self)
         self.parentNode = parentNode
@@ -92,6 +93,7 @@ class NetCtxs(dict):
 
 
 class NetCtx():
+
     def __init__(self, others: NetCtxs, actualKey):
         self.parentNode = others.parentNode
         assert isinstance(self.parentNode, LNode), self.parentNode
@@ -232,7 +234,7 @@ def addPort(n: LNode, intf: Interface):
     """
     d = PortTypeFromDir(intf._direction)
     ext_p = LayoutExternalPort(
-        n, intf._name, d, node2lnode=n._node2lnode)
+        n, name=intf._name, direction=d, node2lnode=n._node2lnode)
     ext_p.originObj = originObjOfPort(intf)
     n.children.append(ext_p)
     addPortToLNode(ext_p, intf, reverseDirection=True)
@@ -274,7 +276,7 @@ def ternaryAsSimpleAssignment(root, op):
     originObj = Assignment(op.operands[0], op.result, virtualOnly=True)
     u = root.addNode(originObj=originObj, name="Assignment")
     u.addPort("", PortType.OUTPUT, PortSide.EAST)
-    u.addPort("",  PortType.INPUT,  PortSide.WEST)
+    u.addPort("", PortType.INPUT, PortSide.WEST)
     return u
 
 
