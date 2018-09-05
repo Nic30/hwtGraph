@@ -35,7 +35,6 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-from build.lib.hwtLib.amba.axis import AxiStream
 from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
 
 
