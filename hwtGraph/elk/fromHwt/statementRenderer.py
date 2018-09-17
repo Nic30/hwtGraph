@@ -13,7 +13,7 @@ from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
 from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
-    walkStatementsForSig
+    walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq, NetCtxs, NetCtx
 from hwt.pyUtils.arrayQuery import arr_any
@@ -68,8 +68,19 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
 
 
 class StatementRenderer():
+    """
+    Render nodes of statement into node or parent node
+    """
 
-    def __init__(self, node: LNode, toL, portCtx, rootNetCtxs):
+    def __init__(self, node: Union[LNode, VirtualLNode], toL,
+                 portCtx: Optional[Signal2stmPortCtx], rootNetCtxs: NetCtx):
+        """
+        :param node: node where nodes of this statement should be rendered
+        :param toL: dictionary for mapping of HDL object to layout objects
+        :param portCtx: optional instance of Signal2stmPortCtx
+            for resolving of component port for RtlSignal/Interface instance
+        :param rootNetCtxs: NetCtx of parent node for lazy net connection
+        """
         self.stm = node.originObj
         self.toL = toL
         self.portCtx = portCtx
@@ -252,12 +263,14 @@ class StatementRenderer():
 
         for s in inputs:
             if (not isConst(s)
-                    and s.hidden 
+                    and s.hidden
                     and s not in self.netCtxs):
                 self.lazyLoadNet(s)
 
         if assig.indexes:
-            raise ValueError("This assignment should be processed before")
+            # [TODO] can be mux or bit to vector conversion
+            # should be processed before by indexedAssignmentsToConcatenation
+            raise ValueError("This assignment should be processed before", assig)
         elif connectOut:
             dst = assig.dst
             rootNetCtxs = self.rootNetCtxs

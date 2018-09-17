@@ -36,6 +36,7 @@ from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
+from hwtLib.spi.master import SpiMaster
 
 
 def convert(u):
@@ -177,6 +178,10 @@ class Conversibility_TC(unittest.TestCase):
 
     def test_Showcase0(self):
         u = Showcase0()
+        convert(u)
+
+    def test_SpiMaster(self):
+        u = SpiMaster()
         convert(u)
 
     def test_DirectFF_sig(self):
