@@ -38,6 +38,8 @@ from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesi
 from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
 from hwtLib.spi.master import SpiMaster
 from hwtLib.samples.builders.ethAddrUpdater import EthAddrUpdater
+from hwtLib.amba.interconnect.rStricOrder import RStrictOrderInterconnect
+from hwtLib.samples.mem.ram import SimpleAsyncRam
 
 
 def convert(u):
@@ -202,6 +204,13 @@ class Conversibility_TC(unittest.TestCase):
         self.assertEqual(len(root.children[0].east), 1)
         self.assertEqual(len(root.children[1].west), 1)
 
+    def test_RStrictOrderInterconnect(self):
+        u = RStrictOrderInterconnect()
+        convert(u)
+
+    def test_SimpleAsyncRam(self):
+        u = SimpleAsyncRam()
+        convert(u)
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()

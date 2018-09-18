@@ -159,12 +159,11 @@ class StatementRenderer():
             if isinstance(out, LPort):
                 self.node.addEdge(oPort, out)
             elif out.hidden:
-                raise ValueError("Hidden signals should not be connected to outside")
+                raise ValueError("Hidden signals should not be connected to outside", name)
             elif self.isVirtual:
                 # This node is inlined inside of parent.
                 # Mark that this output of subnode should be connected
                 # to output of parent node.
-                print(out)
                 ctx, _ = self.netCtxs.getDefault(out)
                 ctx.addDriver(oPort)
             else:
@@ -263,7 +262,7 @@ class StatementRenderer():
             if len(assig.indexes) > 1:
                 raise NotImplementedError()
             i = assig.indexes[0]
-            if isConst(i) and assig.dst._dtype.bit_length() == assig.src._dtype.bit_length() == 1:
+            if isConst(i) and assig.dst._dtype.bit_length() == src._dtype.bit_length() == 1:
                 # bit to vector conversion
                 isBitToVectorConv = True
             else:
@@ -276,10 +275,16 @@ class StatementRenderer():
                 self.lazyLoadNet(s)
 
         if not isBitToVectorConv and assig.indexes:
-            # [TODO] can be mux
             # assignments to separate bites are extracted
             # by indexedAssignmentsToConcatenation as concatenation
-            raise ValueError("This assignment should be processed before", assig)
+            if len(assig.indexes) != 1:
+                raise NotImplementedError(assig)
+
+            # this has to be kind of MUX
+            controls = [assig.indexes[0], ]
+            return self.createMux(assig.dst, inputs, controls, connectOut,
+                                  latched=False)
+
         elif connectOut:
             dst = assig.dst
             rootNetCtxs = self.rootNetCtxs
@@ -392,7 +397,7 @@ class StatementRenderer():
             if not self.isVirtual:
                 portCtx.register(o, PortType.OUTPUT)
 
-        canHaveRamPorts = isinstance(stm, Assignment) and arr_any(
+        canHaveRamPorts = isinstance(stm, IfContainer) and arr_any(
             chain(stm._inputs, stm._outputs),
             lambda s: isinstance(s._dtype, HArray))
         # render RAM ports
@@ -459,7 +464,7 @@ class StatementRenderer():
         # collect clk and clk_en
 
         if len(clk_spec) > 1:
-            raise NotImplementedError()
+            raise NotImplementedError(ifStm, clk_spec)
         else:
             clk = clk_spec[0]
         return self.createRamWriteNode(assig.dst, clk, addr,
