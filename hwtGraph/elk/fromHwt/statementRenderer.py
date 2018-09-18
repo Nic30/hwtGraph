@@ -392,8 +392,9 @@ class StatementRenderer():
             if not self.isVirtual:
                 portCtx.register(o, PortType.OUTPUT)
 
-        canHaveRamPorts = arr_any(chain(stm._inputs, stm._outputs),
-                                  lambda s: isinstance(s._dtype, HArray))
+        canHaveRamPorts = isinstance(stm, Assignment) and arr_any(
+            chain(stm._inputs, stm._outputs),
+            lambda s: isinstance(s._dtype, HArray))
         # render RAM ports
         consumedOutputs = set()
         if canHaveRamPorts:
@@ -418,7 +419,8 @@ class StatementRenderer():
         if not self.isVirtual:
             self.netCtxs.applyConnections(self.node)
 
-    def renderEventDepIfContainer(self, ifStm: IfContainer, s: RtlSignalBase, connectOut):
+    def renderEventDepIfContainer(self, ifStm: IfContainer,
+                                  s: RtlSignalBase, connectOut):
         assert not ifStm.ifFalse, ifStm
         if ifStm.elIfs:
             raise NotImplementedError(MUX)
