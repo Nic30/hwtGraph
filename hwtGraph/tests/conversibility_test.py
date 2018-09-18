@@ -37,6 +37,7 @@ from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
 from hwtLib.spi.master import SpiMaster
+from hwtLib.samples.builders.ethAddrUpdater import EthAddrUpdater
 
 
 def convert(u):
@@ -188,6 +189,10 @@ class Conversibility_TC(unittest.TestCase):
         u = DirectFF_sig()
         convert(u)
 
+    def test_EthAddrUpdater(self):
+        u = EthAddrUpdater()
+        convert(u)
+
     def test_SimpleUnitAxiStream(self):
         u = SimpleUnitAxiStream()
         g = convert(u)
@@ -200,7 +205,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_SpiMaster'))
+    # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

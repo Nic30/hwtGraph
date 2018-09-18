@@ -465,7 +465,7 @@ class StatementRenderer():
 
     def renderForSignal(self, stm: Union[HdlStatement, List[HdlStatement]],
                         s: RtlSignalBase,
-                        connectOut) -> Tuple[LNode, Union[RtlSignalBase, LPort]]:
+                        connectOut) -> Optional[Tuple[LNode, Union[RtlSignalBase, LPort]]]:
         """
         Walk statement and render nodes which are representing
         hardware components (MUX, LATCH, FF, ...) for specified signal
@@ -523,11 +523,20 @@ class StatementRenderer():
             latched = s not in encl
             inputs = []
             for _, stms in stm.cases:
-                inputs.append(self.renderForSignal(stms, s, False)[1])
+                d = self.renderForSignal(stms, s, False)
+                if d is not None:
+                    _, port = d
+                    inputs.append(port)
+                else:
+                    assert latched, (s, stm)
 
             if stm.default:
-                inputs.append(self.renderForSignal(
-                    stm.default, s, False)[1])
+                d = self.renderForSignal(stm.default, s, False)
+                if d is not None:
+                    _, port = d
+                    inputs.append(port)
+                else:
+                    assert latched, (s, stm)
 
             return self.createMux(s, inputs, stm.switchOn, connectOut,
                                   latched=latched)
