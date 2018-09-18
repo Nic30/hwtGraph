@@ -159,7 +159,7 @@ class StatementRenderer():
             if isinstance(out, LPort):
                 self.node.addEdge(oPort, out)
             elif out.hidden:
-                raise NotImplementedError("Hidden signals should not be connected to outside")
+                raise ValueError("Hidden signals should not be connected to outside")
             elif self.isVirtual:
                 # This node is inlined inside of parent.
                 # Mark that this output of subnode should be connected
@@ -258,8 +258,16 @@ class StatementRenderer():
         pctx = self.portCtx
         src = assig.src
         inputs = [src, ]
+        isBitToVectorConv = False
         if assig.indexes:
-            inputs.extend(assig.indexes)
+            if len(assig.indexes) > 1:
+                raise NotImplementedError()
+            i = assig.indexes[0]
+            if isConst(i) and assig.dst._dtype.bit_length() == assig.src._dtype.bit_length() == 1:
+                # bit to vector conversion
+                isBitToVectorConv = True
+            else:
+                inputs.extend(assig.indexes)
 
         for s in inputs:
             if (not isConst(s)
@@ -267,9 +275,10 @@ class StatementRenderer():
                     and s not in self.netCtxs):
                 self.lazyLoadNet(s)
 
-        if assig.indexes:
-            # [TODO] can be mux or bit to vector conversion
-            # should be processed before by indexedAssignmentsToConcatenation
+        if not isBitToVectorConv and assig.indexes:
+            # [TODO] can be mux
+            # assignments to separate bites are extracted
+            # by indexedAssignmentsToConcatenation as concatenation
             raise ValueError("This assignment should be processed before", assig)
         elif connectOut:
             dst = assig.dst
