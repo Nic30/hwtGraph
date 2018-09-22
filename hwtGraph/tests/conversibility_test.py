@@ -13,7 +13,7 @@ from hwtLib.amba.axi_comp.axi4_wDatapump import Axi_wDatapump
 from hwtLib.amba.axiLite_comp.reg import AxiLiteReg
 from hwtLib.amba.axi_comp.tester import AxiTester
 from hwtLib.clocking.clkDivider import ClkDiv3
-from hwtLib.i2c.masterBitCntrl import I2cMasterBitCtrl
+from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
 from hwtLib.logic.binToOneHot import BinToOneHot
 from hwtLib.logic.bitonicSorter import BitonicSorter
 from hwtLib.logic.cntrGray import GrayCntr
@@ -36,7 +36,7 @@ from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
-from hwtLib.spi.master import SpiMaster
+from hwtLib.peripheral.spi.master import SpiMaster
 from hwtLib.samples.builders.ethAddrUpdater import EthAddrUpdater
 from hwtLib.amba.interconnect.rStricOrder import RStrictOrderInterconnect
 from hwtLib.samples.mem.ram import SimpleAsyncRam
