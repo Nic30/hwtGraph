@@ -7,9 +7,9 @@ from hwtGraph.elk.fromHwt.flattenTrees import flattenTrees
 from hwtGraph.elk.fromHwt.mergeSplitsOnInterfaces import mergeSplitsOnInterfaces
 from hwtGraph.elk.fromHwt.netlistPreprocessors import indexedAssignmentsToConcatenation,\
     unhideResultsOfIndexingAndConcatOnPublicSignals
-from hwtLib.samples.intfArray.interfaceArray0 import InterfaceArraySample0SliceOnly,\
-    InterfaceArraySample0ConcatOnly
-from hwtLib.samples.intfArray.interfaceArray1 import InterfaceArraySample1
+from hwtLib.samples.hdlObjLists.listOfInterfaces0 import ListOfInterfacesSample0SliceOnly,\
+    ListOfInterfacesSample0ConcatOnly
+from hwtLib.samples.hdlObjLists.listOfInterfaces1 import ListOfInterfacesSample1
 from hwtLib.samples.simple import SimpleUnit
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 import json
@@ -51,7 +51,7 @@ plat.beforeHdlArchGeneration.extend([
 #            root.children[1].west[0])
 #
 #    def test_triple_slice(self):
-#        u = InterfaceArraySample0SliceOnly()
+#        u = ListOfInterfacesSample0SliceOnly()
 #        root = unitToLayout(u)
 #
 #        # there is clk and reset port
@@ -59,7 +59,7 @@ plat.beforeHdlArchGeneration.extend([
 #                         2 + 1 + 1 + 3)
 #
 #    def test_triple_concat(self):
-#        u = InterfaceArraySample0ConcatOnly()
+#        u = ListOfInterfacesSample0ConcatOnly()
 #        root = unitToLayout(u)
 #
 #        # there is clk and reset port
@@ -67,7 +67,7 @@ plat.beforeHdlArchGeneration.extend([
 #                         2 + 3 + 1 + 1)
 #
 #    def test_triple_slice_triple_concat(self):
-#        u = InterfaceArraySample1()
+#        u = ListOfInterfacesSample1()
 #        root = unitToLayout(u)
 #
 #        # there is clk and reset port

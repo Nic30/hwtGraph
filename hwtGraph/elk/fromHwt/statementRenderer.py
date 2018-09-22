@@ -13,7 +13,7 @@ from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
 from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
-    walkStatementsForSig
+    walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq, NetCtxs, NetCtx
 from hwt.pyUtils.arrayQuery import arr_any
@@ -68,8 +68,19 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
 
 
 class StatementRenderer():
+    """
+    Render nodes of statement into node or parent node
+    """
 
-    def __init__(self, node: LNode, toL, portCtx, rootNetCtxs):
+    def __init__(self, node: Union[LNode, VirtualLNode], toL,
+                 portCtx: Optional[Signal2stmPortCtx], rootNetCtxs: NetCtx):
+        """
+        :param node: node where nodes of this statement should be rendered
+        :param toL: dictionary for mapping of HDL object to layout objects
+        :param portCtx: optional instance of Signal2stmPortCtx
+            for resolving of component port for RtlSignal/Interface instance
+        :param rootNetCtxs: NetCtx of parent node for lazy net connection
+        """
         self.stm = node.originObj
         self.toL = toL
         self.portCtx = portCtx
@@ -148,12 +159,11 @@ class StatementRenderer():
             if isinstance(out, LPort):
                 self.node.addEdge(oPort, out)
             elif out.hidden:
-                raise NotImplementedError("Hidden signals should not be connected to outside")
+                raise ValueError("Hidden signals should not be connected to outside", name)
             elif self.isVirtual:
                 # This node is inlined inside of parent.
                 # Mark that this output of subnode should be connected
                 # to output of parent node.
-                print(out)
                 ctx, _ = self.netCtxs.getDefault(out)
                 ctx.addDriver(oPort)
             else:
@@ -247,17 +257,34 @@ class StatementRenderer():
         pctx = self.portCtx
         src = assig.src
         inputs = [src, ]
+        isBitToVectorConv = False
         if assig.indexes:
-            inputs.extend(assig.indexes)
+            if len(assig.indexes) > 1:
+                raise NotImplementedError()
+            i = assig.indexes[0]
+            if isConst(i) and assig.dst._dtype.bit_length() == src._dtype.bit_length() == 1:
+                # bit to vector conversion
+                isBitToVectorConv = True
+            else:
+                inputs.extend(assig.indexes)
 
         for s in inputs:
             if (not isConst(s)
-                    and s.hidden 
+                    and s.hidden
                     and s not in self.netCtxs):
                 self.lazyLoadNet(s)
 
-        if assig.indexes:
-            raise ValueError("This assignment should be processed before")
+        if not isBitToVectorConv and assig.indexes:
+            # assignments to separate bites are extracted
+            # by indexedAssignmentsToConcatenation as concatenation
+            if len(assig.indexes) != 1:
+                raise NotImplementedError(assig)
+
+            # this has to be kind of MUX
+            controls = [assig.indexes[0], ]
+            return self.createMux(assig.dst, inputs, controls, connectOut,
+                                  latched=False)
+
         elif connectOut:
             dst = assig.dst
             rootNetCtxs = self.rootNetCtxs
@@ -370,8 +397,9 @@ class StatementRenderer():
             if not self.isVirtual:
                 portCtx.register(o, PortType.OUTPUT)
 
-        canHaveRamPorts = arr_any(chain(stm._inputs, stm._outputs),
-                                  lambda s: isinstance(s._dtype, HArray))
+        canHaveRamPorts = isinstance(stm, IfContainer) and arr_any(
+            chain(stm._inputs, stm._outputs),
+            lambda s: isinstance(s._dtype, HArray))
         # render RAM ports
         consumedOutputs = set()
         if canHaveRamPorts:
@@ -396,7 +424,8 @@ class StatementRenderer():
         if not self.isVirtual:
             self.netCtxs.applyConnections(self.node)
 
-    def renderEventDepIfContainer(self, ifStm: IfContainer, s: RtlSignalBase, connectOut):
+    def renderEventDepIfContainer(self, ifStm: IfContainer,
+                                  s: RtlSignalBase, connectOut):
         assert not ifStm.ifFalse, ifStm
         if ifStm.elIfs:
             raise NotImplementedError(MUX)
@@ -435,7 +464,7 @@ class StatementRenderer():
         # collect clk and clk_en
 
         if len(clk_spec) > 1:
-            raise NotImplementedError()
+            raise NotImplementedError(ifStm, clk_spec)
         else:
             clk = clk_spec[0]
         return self.createRamWriteNode(assig.dst, clk, addr,
@@ -443,7 +472,7 @@ class StatementRenderer():
 
     def renderForSignal(self, stm: Union[HdlStatement, List[HdlStatement]],
                         s: RtlSignalBase,
-                        connectOut) -> Tuple[LNode, Union[RtlSignalBase, LPort]]:
+                        connectOut) -> Optional[Tuple[LNode, Union[RtlSignalBase, LPort]]]:
         """
         Walk statement and render nodes which are representing
         hardware components (MUX, LATCH, FF, ...) for specified signal
@@ -501,11 +530,20 @@ class StatementRenderer():
             latched = s not in encl
             inputs = []
             for _, stms in stm.cases:
-                inputs.append(self.renderForSignal(stms, s, False)[1])
+                d = self.renderForSignal(stms, s, False)
+                if d is not None:
+                    _, port = d
+                    inputs.append(port)
+                else:
+                    assert latched, (s, stm)
 
             if stm.default:
-                inputs.append(self.renderForSignal(
-                    stm.default, s, False)[1])
+                d = self.renderForSignal(stm.default, s, False)
+                if d is not None:
+                    _, port = d
+                    inputs.append(port)
+                else:
+                    assert latched, (s, stm)
 
             return self.createMux(s, inputs, stm.switchOn, connectOut,
                                   latched=latched)

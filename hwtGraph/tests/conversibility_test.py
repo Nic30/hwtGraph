@@ -36,6 +36,10 @@ from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
+from hwtLib.spi.master import SpiMaster
+from hwtLib.samples.builders.ethAddrUpdater import EthAddrUpdater
+from hwtLib.amba.interconnect.rStricOrder import RStrictOrderInterconnect
+from hwtLib.samples.mem.ram import SimpleAsyncRam
 
 
 def convert(u):
@@ -179,8 +183,16 @@ class Conversibility_TC(unittest.TestCase):
         u = Showcase0()
         convert(u)
 
+    def test_SpiMaster(self):
+        u = SpiMaster()
+        convert(u)
+
     def test_DirectFF_sig(self):
         u = DirectFF_sig()
+        convert(u)
+
+    def test_EthAddrUpdater(self):
+        u = EthAddrUpdater()
         convert(u)
 
     def test_SimpleUnitAxiStream(self):
@@ -192,10 +204,17 @@ class Conversibility_TC(unittest.TestCase):
         self.assertEqual(len(root.children[0].east), 1)
         self.assertEqual(len(root.children[1].west), 1)
 
+    def test_RStrictOrderInterconnect(self):
+        u = RStrictOrderInterconnect()
+        convert(u)
+
+    def test_SimpleAsyncRam(self):
+        u = SimpleAsyncRam()
+        convert(u)
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_SimpleUnitAxiStream'))
+    # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
