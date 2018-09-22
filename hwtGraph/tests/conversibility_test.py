@@ -7,9 +7,9 @@ from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
     DEFAULT_LAYOUT_OPTIMIZATIONS
-from hwtLib.amba.axi4_rDatapump import Axi_rDatapump
-from hwtLib.amba.axi4_streamToMem import Axi4streamToMem
-from hwtLib.amba.axi4_wDatapump import Axi_wDatapump
+from hwtLib.amba.axi_comp.axi4_rDatapump import Axi_rDatapump
+from hwtLib.amba.axi_comp.axi4_streamToMem import Axi4streamToMem
+from hwtLib.amba.axi_comp.axi4_wDatapump import Axi_wDatapump
 from hwtLib.amba.axiLite_comp.reg import AxiLiteReg
 from hwtLib.amba.axi_comp.tester import AxiTester
 from hwtLib.clocking.clkDivider import ClkDiv3
