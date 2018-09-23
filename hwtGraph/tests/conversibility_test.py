@@ -19,7 +19,7 @@ from hwtLib.logic.bitonicSorter import BitonicSorter
 from hwtLib.logic.cntrGray import GrayCntr
 from hwtLib.logic.crc import Crc
 from hwtLib.logic.crcComb import CrcComb
-from hwtLib.logic.segment7 import Segment7
+from hwtLib.peripheral.segment7 import Segment7
 from hwtLib.mem.cam import Cam
 from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
