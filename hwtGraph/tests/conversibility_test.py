@@ -25,21 +25,21 @@ from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
 from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
-from hwtLib.samples.hierarchy.unitWrapper_test import ArrayIntfExample
-from hwtLib.samples.mem.reg import Latch
-from hwtLib.samples.operators.indexing import IndexingInernJoin, \
+from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
+from hwtLib.examples.mem.reg import Latch
+from hwtLib.examples.operators.indexing import IndexingInernJoin, \
     IndexingInernRangeSplit, IndexingInernSplit
-from hwtLib.samples.showcase0 import Showcase0
-from hwtLib.samples.statements.constDriver import ConstDriverUnit
+from hwtLib.examples.showcase0 import Showcase0
+from hwtLib.examples.statements.constDriver import ConstDriverUnit
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-from hwtLib.samples.simpleAxiStream import SimpleUnitAxiStream
+from hwtLib.examples.simpleAxiStream import SimpleUnitAxiStream
 from hwtLib.peripheral.spi.master import SpiMaster
-from hwtLib.samples.builders.ethAddrUpdater import EthAddrUpdater
+from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
 from hwtLib.amba.interconnect.rStricOrder import RStrictOrderInterconnect
-from hwtLib.samples.mem.ram import SimpleAsyncRam
+from hwtLib.examples.mem.ram import SimpleAsyncRam
 
 
 def convert(u):

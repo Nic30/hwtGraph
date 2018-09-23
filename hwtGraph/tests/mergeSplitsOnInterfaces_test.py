@@ -7,10 +7,10 @@ from hwtGraph.elk.fromHwt.flattenTrees import flattenTrees
 from hwtGraph.elk.fromHwt.mergeSplitsOnInterfaces import mergeSplitsOnInterfaces
 from hwtGraph.elk.fromHwt.netlistPreprocessors import indexedAssignmentsToConcatenation,\
     unhideResultsOfIndexingAndConcatOnPublicSignals
-from hwtLib.samples.hdlObjLists.listOfInterfaces0 import ListOfInterfacesSample0SliceOnly,\
+from hwtLib.examples.hdlObjLists.listOfInterfaces0 import ListOfInterfacesSample0SliceOnly,\
     ListOfInterfacesSample0ConcatOnly
-from hwtLib.samples.hdlObjLists.listOfInterfaces1 import ListOfInterfacesSample1
-from hwtLib.samples.simple import SimpleUnit
+from hwtLib.examples.hdlObjLists.listOfInterfaces1 import ListOfInterfacesSample1
+from hwtLib.examples.simple import SimpleUnit
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 import json
 from hwtGraph.elk.containers.idStore import ElkIdStore
