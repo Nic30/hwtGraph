@@ -212,6 +212,7 @@ class Conversibility_TC(unittest.TestCase):
         u = SimpleAsyncRam()
         convert(u)
 
+
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
