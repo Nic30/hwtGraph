@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='hwtGraph',
-      version='0.9',
+      version='1.0',
       description='Library for conversion of HWT hardware representation '
                   'to graph formats for visualization purposes',
       long_description=long_description,
