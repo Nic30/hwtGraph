@@ -19,7 +19,7 @@ setup(name='hwtGraph',
       author='Michal Orsak',
       author_email='michal.o.socials@gmail.com',
       install_requires=[
-          'hwt>=2.9',
+          'hwt>=3.0',
       ],
       tests_require=[
           'hwtLib'
