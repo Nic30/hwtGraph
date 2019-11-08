@@ -105,7 +105,7 @@ class StatementRenderer():
         :param node: node where to add input port
         :param name: name of newly added port
         :param i: input value
-        :param side: side where input port should be added 
+        :param side: side where input port should be added
         """
         root = self.node
         port = node.addPort(name, PortType.INPUT, side)
@@ -353,7 +353,7 @@ class StatementRenderer():
                     c.addDriver(d.east[0])
                 else:
                     self.netCtxs.joinNetsByKeyVal(signal, d)
-        elif d_cnt == 0 and signal.defVal._isFullVld():
+        elif d_cnt == 0 and signal.def_val._isFullVld():
             raise AssertionError("Value of this net should have been already rendered")
         else:
             raise AssertionError(signal, signal.drivers)

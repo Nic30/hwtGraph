@@ -27,7 +27,7 @@ def indexedAssignmentsToConcatenation(netlist):
     for s in signalsToReduce:
         inputs = []
         for d in list(s.drivers):
-            i = d.indexes[0].staticEval().toPy()
+            i = d.indexes[0].staticEval().to_py()
             if isinstance(i, int):
                 i = slice(i + 1, i)
             v = d.src

@@ -40,7 +40,7 @@ def extractSplits(root: LNode):
                         and op.operands[0] is s:
                     index = op.operands[1]
                     if isConst(index):
-                        i = index.staticEval().toPy()
+                        i = index.staticEval().to_py()
                         if isinstance(i, int):
                             i = slice(i + 1, i)
 
