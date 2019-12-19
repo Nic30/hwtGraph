@@ -21,7 +21,7 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
                 toL: Optional[dict]=None,
                 optimizations=[]) -> LNode:
     """
-    Build LNode instance from Unit instance
+    Build LNode instance (a graph) from Unit instance (a RTL graph)
 
     :attention: unit has to be synthesized
     """
