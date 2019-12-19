@@ -40,6 +40,7 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
+from hwtLib.amba.axiLite_comp.axiLite2Axi import AxiLite_2Axi
 
 
 def convert(u):
@@ -212,10 +213,14 @@ class Conversibility_TC(unittest.TestCase):
         u = SimpleAsyncRam()
         convert(u)
 
+    def test_AxiLite_2Axi(self):
+        u = AxiLite_2Axi()
+        convert(u)
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
+    # suite.addTest(Conversibility_TC('test_AxiLite_2Axi'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
