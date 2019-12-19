@@ -5,7 +5,7 @@ from hwtGraph.elk.containers.lPort import LPort
 def merge_non_reduced_ports(port, reduced_ports):    
     for ch0 in reduced_ports:
         for ch1 in ch0.children:
-            ch1.name = ch1.name + ch1.parent.name
+            ch1.name = "%s.%s" % (ch1.parent.name, ch1.name)
             ch1.parent = port
             port.children.append(ch1)
 
