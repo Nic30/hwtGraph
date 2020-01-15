@@ -32,6 +32,9 @@ def portTryReduce(root: LNode, port: LPort):
 
     new_target, children_edge_to_destroy = max(target_nodes.items(),
                                                key=lambda x: len(x[1]))
+    if port.direction == new_target.direction:
+        return
+        #, (port, new_target, children_edge_to_destroy)
     cnt = len(children_edge_to_destroy)
     if cnt < ch_cnt / 2 or cnt == 1 and ch_cnt == 2:
         # too small or few shared connection to reduce
