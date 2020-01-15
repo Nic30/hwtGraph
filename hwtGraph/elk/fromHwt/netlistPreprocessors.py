@@ -6,13 +6,14 @@ from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwt.pyUtils.arrayQuery import arr_all
 from hwt.hdl.types.array import HArray
 from hwt.hdl.statements import HdlStatement
+from hwt.hdl.types.bits import Bits
 
 
 def indexedAssignmentsToConcatenation(netlist):
     signalsToReduce = set()
 
     for s in netlist.signals:
-        if len(s.drivers) > 1:
+        if len(s.drivers) > 1 and isinstance(s._dtype, Bits):
             compatible = True
             for d in s.drivers:
                 if not isinstance(d, Assignment)\
@@ -35,7 +36,7 @@ def indexedAssignmentsToConcatenation(netlist):
             d._destroy()
 
         inputs.sort(key=lambda x: x[0].stop)
-        s(Concat(*map(lambda x: x[1], inputs)))
+        s(Concat(*[x[1] for x in inputs]))
 
 
 def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
