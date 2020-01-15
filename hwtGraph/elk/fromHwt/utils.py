@@ -16,6 +16,7 @@ from hwtGraph.elk.containers.constants import PortType, PortSide, \
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
+from ipCorePackager.constants import DIRECTION
 
 
 class NetCtxs(dict):
@@ -37,7 +38,7 @@ class NetCtxs(dict):
             if not net.endpoints:
                 # unconnected input or constant which was replaced by value
                 assert not sig.endpoints\
-                       or isConst(sig), sig
+                       or isConst(sig), (sig, sig.endpoints)
                 continue
 
             root.addHyperEdge(list(net.drivers), list(net.endpoints),
@@ -215,6 +216,8 @@ def addPortToLNode(ln: LNode, intf: Interface, reverseDirection=False):
     origin = originObjOfPort(intf)
 
     d = intf._direction
+    if intf._masterDir == DIRECTION.IN:
+        d = INTF_DIRECTION.opposite(d)
     d = PortTypeFromDir(d)
     if reverseDirection:
         d = PortType.opposite(d)
@@ -232,7 +235,11 @@ def addPort(n: LNode, intf: Interface):
     """
     Add LayoutExternalPort for interface
     """
-    d = PortTypeFromDir(intf._direction)
+    d = intf._direction
+    if intf._masterDir == DIRECTION.IN:
+        d = INTF_DIRECTION.opposite(d)
+
+    d = PortTypeFromDir(d)
     ext_p = LayoutExternalPort(
         n, name=intf._name, direction=d, node2lnode=n._node2lnode)
     ext_p.originObj = originObjOfPort(intf)
