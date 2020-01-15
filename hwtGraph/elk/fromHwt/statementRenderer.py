@@ -289,7 +289,7 @@ class StatementRenderer():
                 for i in assig.indexes:
                     assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
                 body_text = "".join(["[%d]"%int(i) for i in assig.indexes])
-                n = self.node.addNode(ITEM_SET, body_text)
+                n = self.node.addNode(ITEM_SET, bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
                                            assig.dst if connectOut else None)
