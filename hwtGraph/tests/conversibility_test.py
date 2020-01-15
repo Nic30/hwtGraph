@@ -41,6 +41,7 @@ from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 from hwtLib.amba.axiLite_comp.axiLite2Axi import AxiLite_2Axi
+from hwtLib.amba.fullDuplexAxiStream import FullDuplexAxiStream
 
 
 def convert(u):
@@ -68,6 +69,26 @@ class DirectFF_sig(Unit):
            r(r)
         )
         self.o(r)
+
+
+class FullDuplexAxiStream_wire(Unit):
+
+    def _declr(self):
+        self.dataIn = FullDuplexAxiStream()
+        self.dataOut = FullDuplexAxiStream()._m()
+
+    def _impl(self):
+        self.dataOut(self.dataIn)
+
+
+class FullDuplexAxiStream_wire_nested(Unit):
+    def _declr(self):
+        FullDuplexAxiStream_wire._declr(self)
+        self.core = FullDuplexAxiStream_wire()
+
+    def _impl(self):
+        self.core.dataIn(self.dataIn)
+        self.dataOut(self.dataOut)
 
 
 class Conversibility_TC(unittest.TestCase):
@@ -215,6 +236,10 @@ class Conversibility_TC(unittest.TestCase):
 
     def test_AxiLite_2Axi(self):
         u = AxiLite_2Axi()
+        convert(u)
+
+    def test_FullDuplexAxiStream_wire(self):
+        u = FullDuplexAxiStream_wire()
         convert(u)
 
 
