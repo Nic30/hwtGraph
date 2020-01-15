@@ -100,5 +100,6 @@ class LPort():
         }
 
     def __repr__(self):
-        return "<{0} {1:#018x} {2}>".format(
-            self.__class__.__name__, id(self), ".".join(self._getDebugName()))
+        return "<{0} {1} {2:#018x} {3}>".format(
+            self.__class__.__name__, self.direction.name,
+            id(self), ".".join(self._getDebugName()))
