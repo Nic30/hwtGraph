@@ -278,7 +278,7 @@ class StatementRenderer():
                 self.lazyLoadNet(s)
 
         if not isBitToVectorConv and assig.indexes:
-            if len(assig.indexes) == 1:
+            if len(assig.indexes) == 1 and not isConst(assig.indexes[0]):
                 # assignments to separate bites are extracted
                 # by indexedAssignmentsToConcatenation as concatenation
                 # this has to be kind of MUX
@@ -288,7 +288,7 @@ class StatementRenderer():
             else:
                 for i in assig.indexes:
                     assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
-                body_text = "".join(["[%d]"%int(i) for i in assig.indexes])
+                body_text = "".join(["[%d]" % int(i) for i in assig.indexes])
                 n = self.node.addNode(ITEM_SET, bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
