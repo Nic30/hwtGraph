@@ -8,11 +8,11 @@ from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
     DEFAULT_LAYOUT_OPTIMIZATIONS
 from hwtLib.amba.axiLite_comp.reg import AxiLiteReg
-from hwtLib.amba.axi_comp.axi4_rDatapump import Axi_rDatapump
-from hwtLib.amba.axi_comp.axi4_streamToMem import Axi4streamToMem
-from hwtLib.amba.axi_comp.axi4_wDatapump import Axi_wDatapump
+from hwtLib.amba.axi_comp.datapump.r import Axi_rDatapump
+from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
+from hwtLib.amba.axi_comp.datapump.w import Axi_wDatapump
 from hwtLib.amba.axi_comp.tester import AxiTester
-from hwtLib.amba.interconnect.rStricOrder import RStrictOrderInterconnect
+from hwtLib.amba.axi_comp.datapump.interconnect.rStricOrder import RStrictOrderInterconnect
 from hwtLib.clocking.clkDivider import ClkDiv3
 from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
@@ -41,7 +41,7 @@ from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
 from hwtLib.amba.axiLite_comp.axiLite2Axi import AxiLite_2Axi
-from hwtLib.amba.fullDuplexAxiStream import FullDuplexAxiStream
+from hwtLib.amba.axis_fullduplex import AxiStreamFullDuplex
 
 
 def convert(u):
@@ -71,20 +71,20 @@ class DirectFF_sig(Unit):
         self.o(r)
 
 
-class FullDuplexAxiStream_wire(Unit):
+class AxiStreamFullDuplex_wire(Unit):
 
     def _declr(self):
-        self.dataIn = FullDuplexAxiStream()
-        self.dataOut = FullDuplexAxiStream()._m()
+        self.dataIn = AxiStreamFullDuplex()
+        self.dataOut = AxiStreamFullDuplex()._m()
 
     def _impl(self):
         self.dataOut(self.dataIn)
 
 
-class FullDuplexAxiStream_wire_nested(Unit):
+class AxiStreamFullDuplex_wire_nested(Unit):
     def _declr(self):
-        FullDuplexAxiStream_wire._declr(self)
-        self.core = FullDuplexAxiStream_wire()
+        AxiStreamFullDuplex_wire._declr(self)
+        self.core = AxiStreamFullDuplex_wire()
 
     def _impl(self):
         self.core.dataIn(self.dataIn)
@@ -238,8 +238,8 @@ class Conversibility_TC(unittest.TestCase):
         u = AxiLite_2Axi()
         convert(u)
 
-    def test_FullDuplexAxiStream_wire(self):
-        u = FullDuplexAxiStream_wire()
+    def test_AxiStreamFullDuplex_wire(self):
+        u = AxiStreamFullDuplex_wire()
         convert(u)
 
 
