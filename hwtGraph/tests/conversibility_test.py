@@ -7,14 +7,17 @@ from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
     DEFAULT_LAYOUT_OPTIMIZATIONS
-from hwtLib.amba.axiLite_comp.reg import AxiLiteReg
-from hwtLib.amba.axi_comp.datapump.r import Axi_rDatapump
+from hwtLib.amba.axi4Lite import Axi4Lite
+from hwtLib.amba.axiLite_comp.to_axi import AxiLite_to_Axi
+from hwtLib.amba.axi_comp.buff import AxiBuff
 from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
-from hwtLib.amba.axi_comp.datapump.w import Axi_wDatapump
 from hwtLib.amba.axi_comp.tester import AxiTester
-from hwtLib.amba.axi_comp.datapump.interconnect.rStricOrder import RStrictOrderInterconnect
+from hwtLib.amba.axis_fullduplex import AxiStreamFullDuplex
+from hwtLib.amba.datapump.interconnect.rStricOrder import RStrictOrderInterconnect
+from hwtLib.amba.datapump.r import Axi_rDatapump
+from hwtLib.amba.datapump.w import Axi_wDatapump
+from hwtLib.clocking.cdc import Cdc
 from hwtLib.clocking.clkDivider import ClkDiv3
-from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
 from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.examples.mem.ram import SimpleAsyncRam
@@ -40,8 +43,6 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-from hwtLib.amba.axiLite_comp.axiLite2Axi import AxiLite_2Axi
-from hwtLib.amba.axis_fullduplex import AxiStreamFullDuplex
 
 
 def convert(u):
@@ -109,8 +110,8 @@ class Conversibility_TC(unittest.TestCase):
         u = Axi4streamToMem()
         convert(u)
 
-    def test_AxiLiteReg(self):
-        u = AxiLiteReg()
+    def test_Axi4LiteReg(self):
+        u = AxiBuff(Axi4Lite)
         convert(u)
 
     def test_AxiTester(self):
@@ -137,8 +138,8 @@ class Conversibility_TC(unittest.TestCase):
         u = Cam()
         convert(u)
 
-    def test_ClkSynchronizer(self):
-        u = ClkSynchronizer()
+    def test_Cdc(self):
+        u = Cdc()
         convert(u)
 
     def test_ClkDiv3(self):
@@ -235,7 +236,7 @@ class Conversibility_TC(unittest.TestCase):
         convert(u)
 
     def test_AxiLite_2Axi(self):
-        u = AxiLite_2Axi()
+        u = AxiLite_to_Axi()
         convert(u)
 
     def test_AxiStreamFullDuplex_wire(self):
