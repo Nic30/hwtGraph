@@ -60,11 +60,12 @@ def _copyPort(port: LPort, targetParent: Union[LPort], reverseDirection):
         d = PortType.opposite(d)
         side = PortSide.opposite(side)
 
-    newP = LPort(targetParent.parentNode, d, side, name=port.name)
     if isinstance(targetParent, LPort):
+        newP = LPort(targetParent.parentNode, d, side, name=port.name)
         targetParent.children.append(newP)
         newP.parent = targetParent
     else:
+        newP = LPort(targetParent, d, side, name=port.name)
         targetParent.getPortSideView(side).append(newP)
 
     for ch in port.children:
@@ -114,10 +115,10 @@ def reconnectPorts(root: LNode, srcPort: LPort,
 
     def portSortKey(x):
         n, e = x
-        if e.dstNode is n:
-            return portOrder[e.src]
-        elif e.srcNode is n:
-            return portOrder[e.dst]
+        if e.dsts[0].parentNode is n:
+            return portOrder[e.srcs[0]]
+        elif e.srcs[0].parentNode is n:
+            return portOrder[e.dsts[0]]
         else:
             raise ValueError("Edge not connected to split node", e, n)
 
@@ -138,8 +139,8 @@ def reconnectPorts(root: LNode, srcPort: LPort,
             mainPort, splitInp)
 
         # reconnect edge from src port to split node
-        assert (e.src is mainPort and e.dstNode is oldSplitNode)\
-            or (e.dst is mainPort and e.srcNode is oldSplitNode), e
+        assert (e.srcs[0] is mainPort and e.dsts[0].parentNode is oldSplitNode)\
+            or (e.dsts[0] is mainPort and e.srcs[0].parentNode is oldSplitNode), e
         e.remove()
 
         _newSplitPorts = [next(p) for p in newSplitPorts]
@@ -159,7 +160,9 @@ def reconnectPorts(root: LNode, srcPort: LPort,
 
             for oldP, newP in zip(oldSplitNode.east, reversed(_newSplitPorts)):
                 for e in list(oldP.outgoingEdges):
-                    root.addEdge(newP, e.dst, originObj=e.originObj)
+                    if len(e.dsts) != 1:
+                        raise NotImplementedError(e)
+                    root.addEdge(newP, e.dsts[0], originObj=e.originObj)
                     e.remove()
         else:
             raise ValueError(oldSplitNode)

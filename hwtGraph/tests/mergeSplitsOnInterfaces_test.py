@@ -1,8 +1,11 @@
+import json
 import unittest
 
 from hwt.synthesizer.dummyPlatform import DummyPlatform
+from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.extractSplits import extractSplits
+from hwtGraph.elk.fromHwt.flattenPorts import flattenPorts
 from hwtGraph.elk.fromHwt.flattenTrees import flattenTrees
 from hwtGraph.elk.fromHwt.mergeSplitsOnInterfaces import mergeSplitsOnInterfaces
 from hwtGraph.elk.fromHwt.netlistPreprocessors import indexedAssignmentsToConcatenation,\
@@ -12,9 +15,6 @@ from hwtLib.examples.hdlObjLists.listOfInterfaces0 import ListOfInterfacesSample
 from hwtLib.examples.hdlObjLists.listOfInterfaces1 import ListOfInterfacesSample1
 from hwtLib.examples.simple import SimpleUnit
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-import json
-from hwtGraph.elk.containers.idStore import ElkIdStore
-from hwtGraph.elk.fromHwt.flattenPorts import flattenPorts
 
 
 def_optimizations = [

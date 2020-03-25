@@ -2,6 +2,13 @@ from hwtGraph.elk.containers.constants import PortType
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
 
+def merge_non_reduced_ports(port, reduced_ports):    
+    for ch0 in reduced_ports:
+        for ch1 in ch0.children:
+            ch1.name = "%s.%s" % (ch1.parent.name, ch1.name)
+            ch1.parent = port
+            port.children.append(ch1)
+
 
 def portTryReduce(root: LNode, port: LPort):
     """
@@ -25,9 +32,12 @@ def portTryReduce(root: LNode, port: LPort):
 
     new_target, children_edge_to_destroy = max(target_nodes.items(),
                                                key=lambda x: len(x[1]))
+    if port.direction == new_target.direction:
+        return
+        #, (port, new_target, children_edge_to_destroy)
     cnt = len(children_edge_to_destroy)
     if cnt < ch_cnt / 2 or cnt == 1 and ch_cnt == 2:
-        # too small to few shared connection to reduce
+        # too small or few shared connection to reduce
         return
 
     children_to_destroy = set()
@@ -74,6 +84,12 @@ def portTryReduce(root: LNode, port: LPort):
     new_target.children = [
         ch for ch in new_target.children if ch not in on_target_children_to_destroy]
 
+    # if the port does hove some sub ports which are an exceptions
+    # from main port connection we have to add them
+    merge_non_reduced_ports(port, children_to_destroy)
+    merge_non_reduced_ports(new_target, on_target_children_to_destroy)
+    
+    
     # connect this port to new target as it was connected by children before
     # [TODO] names for new edges
     if port.direction == PortType.OUTPUT:

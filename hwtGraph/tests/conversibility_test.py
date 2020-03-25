@@ -7,39 +7,42 @@ from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
     DEFAULT_LAYOUT_OPTIMIZATIONS
-from hwtLib.amba.axi_comp.axi4_rDatapump import Axi_rDatapump
-from hwtLib.amba.axi_comp.axi4_streamToMem import Axi4streamToMem
-from hwtLib.amba.axi_comp.axi4_wDatapump import Axi_wDatapump
-from hwtLib.amba.axiLite_comp.reg import AxiLiteReg
+from hwtLib.amba.axi4Lite import Axi4Lite
+from hwtLib.amba.axiLite_comp.to_axi import AxiLite_to_Axi
+from hwtLib.amba.axi_comp.buff import AxiBuff
+from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
 from hwtLib.amba.axi_comp.tester import AxiTester
+from hwtLib.amba.axis_fullduplex import AxiStreamFullDuplex
+from hwtLib.amba.datapump.interconnect.rStricOrder import RStrictOrderInterconnect
+from hwtLib.amba.datapump.r import Axi_rDatapump
+from hwtLib.amba.datapump.w import Axi_wDatapump
+from hwtLib.clocking.cdc import Cdc
 from hwtLib.clocking.clkDivider import ClkDiv3
-from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
+from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
+from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
+from hwtLib.examples.mem.ram import SimpleAsyncRam
+from hwtLib.examples.mem.reg import Latch
+from hwtLib.examples.operators.indexing import IndexingInernJoin, \
+    IndexingInernRangeSplit, IndexingInernSplit
+from hwtLib.examples.showcase0 import Showcase0
+from hwtLib.examples.simpleAxiStream import SimpleUnitAxiStream
+from hwtLib.examples.statements.constDriver import ConstDriverUnit
 from hwtLib.logic.binToOneHot import BinToOneHot
 from hwtLib.logic.bitonicSorter import BitonicSorter
 from hwtLib.logic.cntrGray import GrayCntr
 from hwtLib.logic.crc import Crc
 from hwtLib.logic.crcComb import CrcComb
-from hwtLib.peripheral.segment7 import Segment7
 from hwtLib.mem.cam import Cam
-from hwtLib.clocking.clkSynchronizer import ClkSynchronizer
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
 from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
-from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
-from hwtLib.examples.mem.reg import Latch
-from hwtLib.examples.operators.indexing import IndexingInernJoin, \
-    IndexingInernRangeSplit, IndexingInernSplit
-from hwtLib.examples.showcase0 import Showcase0
-from hwtLib.examples.statements.constDriver import ConstDriverUnit
+from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
+from hwtLib.peripheral.segment7 import Segment7
+from hwtLib.peripheral.spi.master import SpiMaster
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
-from hwtLib.examples.simpleAxiStream import SimpleUnitAxiStream
-from hwtLib.peripheral.spi.master import SpiMaster
-from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
-from hwtLib.amba.interconnect.rStricOrder import RStrictOrderInterconnect
-from hwtLib.examples.mem.ram import SimpleAsyncRam
 
 
 def convert(u):
@@ -62,11 +65,31 @@ class DirectFF_sig(Unit):
         self.clk = Signal()
 
     def _impl(self):
-        r = self._sig("r", defVal=0)
+        r = self._sig("r", def_val=0)
         If(self.clk._onRisingEdge(),
            r(r)
         )
         self.o(r)
+
+
+class AxiStreamFullDuplex_wire(Unit):
+
+    def _declr(self):
+        self.dataIn = AxiStreamFullDuplex()
+        self.dataOut = AxiStreamFullDuplex()._m()
+
+    def _impl(self):
+        self.dataOut(self.dataIn)
+
+
+class AxiStreamFullDuplex_wire_nested(Unit):
+    def _declr(self):
+        AxiStreamFullDuplex_wire._declr(self)
+        self.core = AxiStreamFullDuplex_wire()
+
+    def _impl(self):
+        self.core.dataIn(self.dataIn)
+        self.dataOut(self.dataOut)
 
 
 class Conversibility_TC(unittest.TestCase):
@@ -87,8 +110,8 @@ class Conversibility_TC(unittest.TestCase):
         u = Axi4streamToMem()
         convert(u)
 
-    def test_AxiLiteReg(self):
-        u = AxiLiteReg()
+    def test_Axi4LiteReg(self):
+        u = AxiBuff(Axi4Lite)
         convert(u)
 
     def test_AxiTester(self):
@@ -115,8 +138,8 @@ class Conversibility_TC(unittest.TestCase):
         u = Cam()
         convert(u)
 
-    def test_ClkSynchronizer(self):
-        u = ClkSynchronizer()
+    def test_Cdc(self):
+        u = Cdc()
         convert(u)
 
     def test_ClkDiv3(self):
@@ -212,10 +235,18 @@ class Conversibility_TC(unittest.TestCase):
         u = SimpleAsyncRam()
         convert(u)
 
+    def test_AxiLite_2Axi(self):
+        u = AxiLite_to_Axi()
+        convert(u)
+
+    def test_AxiStreamFullDuplex_wire(self):
+        u = AxiStreamFullDuplex_wire()
+        convert(u)
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
+    # suite.addTest(Conversibility_TC('test_AxiLite_2Axi'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

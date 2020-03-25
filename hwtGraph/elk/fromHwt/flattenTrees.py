@@ -105,19 +105,25 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
                 outputedge.remove()
                 root.addHyperEdge([o, ], dsts, originObj=outputedge.originObj)
 
-            for i, (iN, iP, iE) in enumerate(inputEdges):
+            port_names = []
+            bit_offset = 0
+            for i, (iN, iP, iE) in reversed(list(enumerate(inputEdges))):
                 name = None
                 index = len(inputEdges) - i - 1
                 if hasattr(iE.originObj, "_dtype"):
                     w = iE.originObj._dtype.bit_length()
                     if w > 1:
-                        name = "[%d:%d]" % ((index + 1) * w, index * w)
+                        name = "[%d:%d]" % (w + bit_offset, bit_offset)
                     else:
-                        name = None
+                        name = "[%d]" % bit_offset
+                    bit_offset += w
 
                 if name is None:
+                    assert bit_offset == 0, "can not mix implicitly indexed and bit indexed array items"
                     name = "[%d]" % (index)
-
+                port_names.append(name)
+            port_names = list(reversed(port_names))
+            for name, (_, iP, iE) in zip(port_names, inputEdges):
                 inp = newNode.addPort(name,
                                       PortType.INPUT, PortSide.WEST)
                 iE.removeTarget(iP)

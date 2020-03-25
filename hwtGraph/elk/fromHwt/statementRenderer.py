@@ -25,6 +25,7 @@ LATCHED_MUX = "LATCHED_MUX"
 RAM_WRITE = "RAM_WRITE"
 RAM_READ = "RAM_READ"
 CONNECTION = "CONNECTION"
+ITEM_SET = "ITEM_SET"
 
 #                     __________
 # if rising(clk): clk-|>       |
@@ -105,7 +106,7 @@ class StatementRenderer():
         :param node: node where to add input port
         :param name: name of newly added port
         :param i: input value
-        :param side: side where input port should be added 
+        :param side: side where input port should be added
         """
         root = self.node
         port = node.addPort(name, PortType.INPUT, side)
@@ -259,10 +260,12 @@ class StatementRenderer():
         inputs = [src, ]
         isBitToVectorConv = False
         if assig.indexes:
-            if len(assig.indexes) > 1:
-                raise NotImplementedError()
+            #if len(assig.indexes) > 1:
+            #    raise NotImplementedError()
             i = assig.indexes[0]
-            if isConst(i) and assig.dst._dtype.bit_length() == src._dtype.bit_length() == 1:
+            if len(assig.indexes) == 1\
+                    and isConst(i)\
+                    and assig.dst._dtype.bit_length() == src._dtype.bit_length() == 1:
                 # bit to vector conversion
                 isBitToVectorConv = True
             else:
@@ -275,16 +278,22 @@ class StatementRenderer():
                 self.lazyLoadNet(s)
 
         if not isBitToVectorConv and assig.indexes:
-            # assignments to separate bites are extracted
-            # by indexedAssignmentsToConcatenation as concatenation
-            if len(assig.indexes) != 1:
-                raise NotImplementedError(assig)
-
-            # this has to be kind of MUX
-            controls = [assig.indexes[0], ]
-            return self.createMux(assig.dst, inputs, controls, connectOut,
-                                  latched=False)
-
+            if len(assig.indexes) == 1 and not isConst(assig.indexes[0]):
+                # assignments to separate bites are extracted
+                # by indexedAssignmentsToConcatenation as concatenation
+                # this has to be kind of MUX
+                controls = [assig.indexes[0], ]
+                return self.createMux(assig.dst, inputs, controls, connectOut,
+                                      latched=False)
+            else:
+                for i in assig.indexes:
+                    assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
+                body_text = "".join(["[%d]" % int(i) for i in assig.indexes])
+                n = self.node.addNode(ITEM_SET, bodyText=body_text)
+                self.addInputPort(n, "", assig.src)
+                oPort = self.addOutputPort(n, "",
+                                           assig.dst if connectOut else None)
+                return n, oPort
         elif connectOut:
             dst = assig.dst
             rootNetCtxs = self.rootNetCtxs
@@ -353,7 +362,7 @@ class StatementRenderer():
                     c.addDriver(d.east[0])
                 else:
                     self.netCtxs.joinNetsByKeyVal(signal, d)
-        elif d_cnt == 0 and signal.defVal._isFullVld():
+        elif d_cnt == 0 and signal.def_val._isFullVld():
             raise AssertionError("Value of this net should have been already rendered")
         else:
             raise AssertionError(signal, signal.drivers)
