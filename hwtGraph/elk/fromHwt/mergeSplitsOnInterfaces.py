@@ -101,11 +101,11 @@ def reconnectPorts(root: LNode, srcPort: LPort,
                    oldSplits: List[Tuple[LNode, LEdge]],
                    newSplitNode: LNode):
     """
-    :ivar root: top LNode instance in which are nodes and links stored
-    :ivar srcPort: for SLICE it is port which is connected to input of SLICE node
+    :ivar ~.root: top LNode instance in which are nodes and links stored
+    :ivar ~.srcPort: for SLICE it is port which is connected to input of SLICE node
         for CONCAT it is port which is connected to output of CONCAT
-    :ivar oldSplits: list of tuples (node, edge) which should be disconnected from graph
-    :ivar newSplitNode: new node which should be connected to graph
+    :ivar ~.oldSplits: list of tuples (node, edge) which should be disconnected from graph
+    :ivar ~.newSplitNode: new node which should be connected to graph
     """
     # sort oldSplit nodes because they are not in same order as signals on
     # ports
