@@ -131,14 +131,14 @@ class HierarchyHandling(Enum):
     Options for setting how children of nodes should be handled in the current layout run. There are
     three options for this:
 
-    :ivar INHERIT: The current node should implement the same behavior as the parent node. If the root
+    :ivar ~.INHERIT: The current node should implement the same behavior as the parent node. If the root
         node is evaluated and it is set to inherit (or not set at all) the property is set to
         {@link #SEPARATE_CHILDREN}.
 
-    :ivar INCLUDE_CHILDREN: The children of the current node should be included in the current layout
+    :ivar ~.INCLUDE_CHILDREN: The children of the current node should be included in the current layout
         run. This enables edges to be routed across the boundary of hierarchy layers.
 
-    :ivar SEPARATE_CHILDREN: The children of the current node are layouted independently from their
+    :ivar ~.SEPARATE_CHILDREN: The children of the current node are layouted independently from their
         parent node. The resulting layout information is then used to layout the parent node.
 
     The inclusion of further children can be disabled by setting the option back to SEPARATE_CHILDREN

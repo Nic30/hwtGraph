@@ -13,15 +13,15 @@ class LNode():
     """
     Component for component diagram
 
-    :ivar originObj: original object which this node represents
-    :ivar name: name of this unit
-    :ivar class_name: name of class of this unit
+    :ivar ~.originObj: original object which this node represents
+    :ivar ~.name: name of this unit
+    :ivar ~.class_name: name of class of this unit
 
-    :ivar north: list of LPort for on  top side.
-    :ivar east: list of LPort for on right side.
-    :ivar south: list of LPort for on bottom side.
-    :ivar west: list of LPort for on left side.
-    :ivar bodyText: text which should be rendered inside body of component
+    :ivar ~.north: list of LPort for on  top side.
+    :ivar ~.east: list of LPort for on right side.
+    :ivar ~.south: list of LPort for on bottom side.
+    :ivar ~.west: list of LPort for on left side.
+    :ivar ~.bodyText: text which should be rendered inside body of component
         (if it is not only container of children)
     """
 

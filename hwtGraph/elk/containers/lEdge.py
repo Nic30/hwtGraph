@@ -5,11 +5,11 @@ class LEdge():
     """
     Edge in layout graph
 
-    :ivar parentNode: parent node instance
-    :ivar name: name of this edge (label)
-    :ivar originObj: optional object which was this edge generated for
-    :ivar srcs: list of LPort instances where this edge starts
-    :ivar dsts: list of LPort instances where this edge ends
+    :ivar ~.parentNode: parent node instance
+    :ivar ~.name: name of this edge (label)
+    :ivar ~.originObj: optional object which was this edge generated for
+    :ivar ~.srcs: list of LPort instances where this edge starts
+    :ivar ~.dsts: list of LPort instances where this edge ends
     """
 
     def __init__(self, parentNode: "LNode", srcs, dsts,

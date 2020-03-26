@@ -8,14 +8,14 @@ class LPort():
     """
     Port for component in component diagram
 
-    :ivar originObj: original object which this node represents
-    :ivar parent: parent unit of this port
-    :ivar name: name of this port
-    :ivar direction: direction of this port
-    :ivar geometry: absolute geometry in layout
-    :ivar children: list of children ports, before interface connecting phase
+    :ivar ~.originObj: original object which this node represents
+    :ivar ~.parent: parent unit of this port
+    :ivar ~.name: name of this port
+    :ivar ~.direction: direction of this port
+    :ivar ~.geometry: absolute geometry in layout
+    :ivar ~.children: list of children ports, before interface connecting phase
             (when routing this list is empty and children are directly on parent LNode)
-    :ivar index: The index of a port in the fixed order around a node.
+    :ivar ~.index: The index of a port in the fixed order around a node.
         The order is assumed as clockwise, starting with the leftmost port on the top side.
         This option must be set if ‘Port Constraints’ is set to FIXED_ORDER
         and no specific positions are given for the ports. Additionally,
