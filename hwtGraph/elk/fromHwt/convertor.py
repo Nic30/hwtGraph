@@ -1,6 +1,6 @@
 from typing import Optional
 
-from hwt.hdl.portItem import PortItem
+from hwt.hdl.portItem import HdlPortItem
 from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.lNode import LNode
 
@@ -70,11 +70,11 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
         if not s.hidden:
             net, _ = netCtx.getDefault(s)
             for e in s.endpoints:
-                if isinstance(e, PortItem):
+                if isinstance(e, HdlPortItem):
                     net.addEndpoint(toL[e])
 
             for d in s.drivers:
-                if isinstance(d, PortItem):
+                if isinstance(d, HdlPortItem):
                     net.addDriver(toL[d])
 
     netCtx.applyConnections(root)

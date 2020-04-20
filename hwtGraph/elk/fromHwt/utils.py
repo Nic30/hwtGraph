@@ -4,7 +4,7 @@ from hwt.hdl.assignment import Assignment
 from hwt.hdl.constants import INTF_DIRECTION
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
-from hwt.hdl.portItem import PortItem
+from hwt.hdl.portItem import HdlPortItem
 from hwt.hdl.types.defs import BIT
 from hwt.hdl.value import Value
 from hwt.pyUtils.uniqList import UniqList
@@ -17,6 +17,7 @@ from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
 from ipCorePackager.constants import DIRECTION
+from io import StringIO
 
 
 class NetCtxs(dict):
@@ -147,7 +148,12 @@ def toStr(obj):
     """
     Convert hwt object to string
     """
-    return HwtSerializer.asHdl(obj, HwtSerializer.getBaseContext())
+    to_hdl = HwtSerializer.TO_HDL_AST()
+    hdl = to_hdl.as_hdl(obj)
+    buff = StringIO()
+    ser = HwtSerializer.TO_HDL(buff, to_hdl.name_scope)
+    ser.visit_iHdlObj(hdl)
+    return buff.getvalue()
 
 
 def getParentUnit(intf):
@@ -175,10 +181,10 @@ def originObjOfPort(intf):
     elif d == PortType.OUTPUT:
         # has hierarchy
         origin = intf._sigInside.endpoints[0]
-        assert isinstance(origin, PortItem), (intf, origin)
+        assert isinstance(origin, HdlPortItem), (intf, origin)
     elif d == PortType.INPUT:
         origin = intf._sigInside.drivers[0]
-        assert isinstance(origin, PortItem), (intf, origin)
+        assert isinstance(origin, HdlPortItem), (intf, origin)
     else:
         raise ValueError(d)
 
@@ -287,7 +293,7 @@ def ternaryAsSimpleAssignment(root, op):
     return u
 
 
-def LNodeAddPortFromHdl(node, origin: Union[Interface, PortItem],
+def LNodeAddPortFromHdl(node, origin: Union[Interface, HdlPortItem],
                         direction: PortType,
                         name: str):
     if direction == PortType.OUTPUT:

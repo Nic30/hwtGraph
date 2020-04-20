@@ -1,5 +1,5 @@
 from hwt.hdl.operator import Operator
-from hwt.hdl.portItem import PortItem
+from hwt.hdl.portItem import HdlPortItem
 
 
 def walkSignalEndpointsToStatements(sig):
@@ -16,7 +16,7 @@ def connectSignalToStatements(s, toL, stmPorts, root, reducedStatements):
     endpointPorts = set()
 
     def addEndpoint(ep):
-        if isinstance(ep, PortItem):
+        if isinstance(ep, HdlPortItem):
             dst = toL[ep]
             endpointPorts.add(dst)
         elif ep in reducedStatements:
@@ -29,7 +29,7 @@ def connectSignalToStatements(s, toL, stmPorts, root, reducedStatements):
     # connect all drivers of this signal with all endpoints
     for stm in s.drivers:
         node = toL[stm]
-        if isinstance(stm, PortItem):
+        if isinstance(stm, HdlPortItem):
             src = node
         elif isinstance(stm, Operator):
             continue

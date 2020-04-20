@@ -2,7 +2,7 @@ from typing import Dict
 
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import isConst
-from hwt.hdl.statements import HdlStatement
+from hwt.hdl.statement import HdlStatement
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr, NetCtxs
