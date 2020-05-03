@@ -1,3 +1,4 @@
+from io import StringIO
 from typing import Union, List
 
 from hwt.hdl.assignment import Assignment
@@ -8,7 +9,7 @@ from hwt.hdl.portItem import HdlPortItem
 from hwt.hdl.types.defs import BIT
 from hwt.hdl.value import Value
 from hwt.pyUtils.uniqList import UniqList
-from hwt.serializer.hwt.serializer import HwtSerializer
+from hwt.serializer.hwt import HwtSerializer
 from hwt.synthesizer.interface import Interface
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide, \
@@ -17,7 +18,6 @@ from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
 from ipCorePackager.constants import DIRECTION
-from io import StringIO
 
 
 class NetCtxs(dict):
@@ -122,7 +122,6 @@ class NetCtx():
                 # source is child output port
                 assert self.parentNode is src.parentNode.parent, src
                 assert src.direction == PortType.OUTPUT, src
-
             return self.drivers.append(src)
 
     def addEndpoint(self, dst):
@@ -140,7 +139,6 @@ class NetCtx():
                 # target is child input port
                 assert self.parentNode is dst.parentNode.parent, dst
                 assert dst.direction == PortType.INPUT, dst
-
             return self.endpoints.append(dst)
 
 
@@ -149,9 +147,10 @@ def toStr(obj):
     Convert hwt object to string
     """
     to_hdl = HwtSerializer.TO_HDL_AST()
+    to_hdl.debug = True
     hdl = to_hdl.as_hdl(obj)
     buff = StringIO()
-    ser = HwtSerializer.TO_HDL(buff, to_hdl.name_scope)
+    ser = HwtSerializer.TO_HDL(buff)
     ser.visit_iHdlObj(hdl)
     return buff.getvalue()
 
@@ -173,20 +172,12 @@ def PortTypeFromDir(direction):
 
 
 def originObjOfPort(intf):
-    d = intf._direction
-    d = PortTypeFromDir(d)
-
     if intf._interfaces:
-        origin = intf
-    elif d == PortType.OUTPUT:
         # has hierarchy
-        origin = intf._sigInside.endpoints[0]
-        assert isinstance(origin, HdlPortItem), (intf, origin)
-    elif d == PortType.INPUT:
-        origin = intf._sigInside.drivers[0]
-        assert isinstance(origin, HdlPortItem), (intf, origin)
+        origin = intf
     else:
-        raise ValueError(d)
+        origin = intf._hdl_port
+        assert origin is not None
 
     return origin
 
@@ -239,7 +230,7 @@ def addPortToLNode(ln: LNode, intf: Interface, reverseDirection=False):
 
 def addPort(n: LNode, intf: Interface):
     """
-    Add LayoutExternalPort for interface
+    Add LayoutExternalPort for interface and LPort instances to this LNode
     """
     d = intf._direction
     if intf._masterDir == DIRECTION.IN:

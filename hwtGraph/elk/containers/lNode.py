@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import List, Generator
+from typing import List, Generator, Tuple, Optional
 
 from hwt.pyUtils.uniqList import UniqList
 
@@ -7,6 +7,7 @@ from hwtGraph.elk.containers.constants import PortSide, PortType, \
     NodeType, PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lPort import LPort
+from hwtGraph.elk.containers.pathPrefix import pathPrefixApply
 
 
 class LNode():
@@ -23,11 +24,13 @@ class LNode():
     :ivar ~.west: list of LPort for on left side.
     :ivar ~.bodyText: text which should be rendered inside body of component
         (if it is not only container of children)
+    :ivar ~._shared_component_with: optional LNode insance
+        if set the body of this component is not filled and it is same
+        as the _shared_component_with LNode
     """
 
     def __init__(self, parent: "LNode"=None, name: str=None,
                  originObj=None, node2lnode=None, bodyText=None):
-        super(LNode, self).__init__()
         if name is not None:
             assert isinstance(name, str)
         self.originObj = originObj
@@ -44,6 +47,7 @@ class LNode():
         self.portConstraints = PortConstraints.FIXED_ORDER
         self.children = []
         self.origin = None
+        self._shared_component_with = None
         self._node2lnode = node2lnode
 
     def iterPorts(self) -> Generator[LPort, None, None]:
@@ -106,12 +110,34 @@ class LNode():
         e = LEdge(self, srcs, dsts, name=name, originObj=originObj)
         return e
 
-    def toElkJson_registerNodes(self, idStore, isTop=False):
-        idStore.registerNode(self)
-        for ch in self.children:
-            ch.toElkJson_registerNodes(idStore)
+    def _getUniqRefChildren(self, path_prefix: Optional[Tuple["LNode", ...]]):
+        comp = self._shared_component_with
+        if comp is None:
+            children = self.children
+        else:
+            assert not self.children, self
+            # reuse the body of an existing component
+            if path_prefix is None:
+                path_prefix = (self, )
+            else:
+                path_prefix = (*path_prefix, self, )
+            children = comp.children
+        return children, path_prefix
 
-    def toElkJson_registerPorts(self, idStore):
+    def toElkJson_registerNodes(self, idStore,
+                                path_prefix: Optional[Tuple["LNode", ...]]):
+
+        id_ = idStore.registerNode(pathPrefixApply(path_prefix, self))
+        c = self._shared_component_with
+        if c is not None:
+            idStore[pathPrefixApply(pathPrefixApply(path_prefix, self), c)] = id_
+
+        children, path_prefix = self._getUniqRefChildren(path_prefix)
+        for ch in children:
+            ch.toElkJson_registerNodes(idStore, path_prefix)
+
+    def toElkJson_registerPorts(self, idStore,
+                                path_prefix: Optional[Tuple["LNode", ...]]):
         """
         The index of a port in the fixed order around a node.
         The order is assumed as clockwise, starting with the leftmost port on the top side.
@@ -120,61 +146,77 @@ class LNode():
         the option ‘Port Side’ must be defined in this case.
         """
         addIndex = self.portConstraints == PortConstraints.FIXED_ORDER
-        for i, p in enumerate(self.iterPorts()):
-            if addIndex:
-                p.index = i
-            idStore.registerPort(p)
+        c = self._shared_component_with
+        pp = pathPrefixApply(path_prefix, self)
 
-        for ch in self.children:
-            ch.toElkJson_registerPorts(idStore)
+        if c is None:
+            for i, p in enumerate(self.iterPorts()):
+                if addIndex:
+                    p.index = i
+                idStore.registerPort(pathPrefixApply(path_prefix, p))
+        else:
+            for i, (p, orig_p) in enumerate(zip(self.iterPorts(), c.iterPorts())):
+                if addIndex:
+                    p.index = i
+                id_ = idStore.registerPort(pathPrefixApply(path_prefix, p))
+                idStore[pathPrefixApply(pp, orig_p)] = id_
 
-    def toElkJson(self, idStore: "ElkIdStore", isTop=True):
+        children, path_prefix = self._getUniqRefChildren(path_prefix)
+        for ch in children:
+            ch.toElkJson_registerPorts(idStore, path_prefix)
+
+    def toElkJson(self, idStore: "ElkIdStore", isTop=True, path_prefix=None):
         props = {
             "org.eclipse.elk.portConstraints": self.portConstraints.name,
             'org.eclipse.elk.randomSeed': 0,
             'org.eclipse.elk.layered.mergeEdges': 1,
         }
-        d_hwt = {
+        hw_meta = {
             "name": self.name,
         }
         d = {
-            "hwt": d_hwt,
+            "hwMeta": hw_meta,
             "properties": props
         }
         if self.bodyText is not None:
-            d_hwt["bodyText"] = self.bodyText
+            hw_meta["bodyText"] = self.bodyText
 
-        if not isTop:
-            d["id"] = str(idStore[self])
+        if isTop:
+            self.toElkJson_registerNodes(idStore, None)
+            self.toElkJson_registerPorts(idStore, None)
+        else:
+            d["id"] = str(idStore[pathPrefixApply(path_prefix, self)])
             d["hideChildren"] = True
             # if self.parent.parent is not None:
             #    props["org.eclipse.elk.noLayout"] = True
-        else:
-            self.toElkJson_registerNodes(idStore, isTop=isTop)
-            self.toElkJson_registerPorts(idStore)
 
-        d["ports"] = [p.toElkJson(idStore)
+        d["ports"] = [p.toElkJson(idStore, path_prefix)
                       for p in self.iterPorts()]
-        if self.children:
+
+        children, path_prefix = self._getUniqRefChildren(path_prefix)
+        if children:
+            formalParent = self._shared_component_with
+            if formalParent is None:
+                formalParent = self
             nodes = []
             edges = UniqList()
-            for ch in self.children:
+            for ch in children:
                 for e in ch.iterEdges():
-                    if e.parentNode is self:
+                    if e.parentNode is formalParent:
                         edges.append(e)
 
-            for ch in self.children:
-                nodes.append(ch.toElkJson(idStore, isTop=False))
+            for ch in children:
+                nodes.append(ch.toElkJson(idStore, isTop=False, path_prefix=path_prefix))
 
             nodes.sort(key=lambda n: n["id"])
             d["children"] = nodes
 
             for e in edges:
-                idStore.registerEdge(e)
+                idStore.registerEdge(pathPrefixApply(path_prefix, e))
 
-            d["edges"] = [e.toElkJson(idStore) for e in edges]
+            d["edges"] = [e.toElkJson(idStore, path_prefix) for e in edges]
 
-        d_hwt["maxId"] = idStore.getMaxId()
+        hw_meta["maxId"] = idStore.getMaxId()
 
         return d
 
@@ -201,8 +243,8 @@ class LayoutExternalPort(LNode):
         # else:
         #     raise ValueError(direction)
 
-    def toElkJson(self, idStore, isTop=True):
-        d = super(LayoutExternalPort, self).toElkJson(idStore, isTop=isTop)
-        d["hwt"]['isExternalPort'] = True
+    def toElkJson(self, idStore, isTop=True, path_prefix=None):
+        d = super(LayoutExternalPort, self).toElkJson(idStore, isTop=isTop, path_prefix=path_prefix)
+        d["hwMeta"]['isExternalPort'] = True
         # d['properties']["org.eclipse.elk.layered.layering.layerConstraint"] = self.layeringLayerConstraint.name
         return d

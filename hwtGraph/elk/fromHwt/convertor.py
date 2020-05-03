@@ -1,15 +1,14 @@
 from typing import Optional
 
+from hwt.hdl.constants import INTF_DIRECTION
 from hwt.hdl.portItem import HdlPortItem
 from hwt.synthesizer.unit import Unit
+from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
-
 from hwtGraph.elk.fromHwt.statementRenderer import StatementRenderer
 from hwtGraph.elk.fromHwt.statementRendererUtils import addStmAsLNode, VirtualLNode
 from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, NetCtxs,\
     originObjOfPort
-from hwt.hdl.constants import INTF_DIRECTION
-from hwtGraph.elk.containers.constants import PortType, PortSide
 
 
 def sortStatementPorts(root):
@@ -27,6 +26,17 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
     """
     if toL is None:
         toL = {}
+
+    if u._shared_component_with:
+        # this component does not have body generated and uses a different
+        # component
+        shared_comp, _, _ = u._shared_component_with
+        shared_node = toL[shared_comp]
+        for intf in u._interfaces:
+            addPortToLNode(node, intf)
+        node._shared_component_with = shared_node
+        return
+
     if node is None:
         root = LNode(name=u._name, originObj=u, node2lnode=toL)
     else:
@@ -66,7 +76,7 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
             r.renderContent()
 
     # connect nets inside this unit
-    for s in u._ctx.signals:
+    for s in sorted(u._ctx.signals, key=lambda x: (x.name, x._instId)):
         if not s.hidden:
             net, _ = netCtx.getDefault(s)
             for e in s.endpoints:

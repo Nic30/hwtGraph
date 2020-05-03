@@ -36,13 +36,13 @@ from hwtLib.mem.cam import Cam
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
 from hwtLib.mem.lutRam import RAM64X1S
 from hwtLib.mem.ram import Ram_dp
+from hwtLib.peripheral.displays.segment7 import Segment7
 from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
-from hwtLib.peripheral.segment7 import Segment7
 from hwtLib.peripheral.spi.master import SpiMaster
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
-from hwtLib.tests.synthesizer.interfaceLevel.subunitsSynthesisTC import synthesised
+from hwt.synthesizer.utils import synthesised
 
 
 def convert(u):
@@ -50,10 +50,10 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
-    # import json
+    import json
     # from pprint import pprint
-    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
-    #     json.dump(data, fp)
+    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+        json.dump(data, fp, indent=2)
     # pprint(data)
     return g, data
 
@@ -246,7 +246,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_AxiLite_2Axi'))
+    # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

@@ -1,4 +1,5 @@
 from hwtGraph.elk.containers.constants import PortType
+from hwtGraph.elk.containers.pathPrefix import pathPrefixApply
 
 
 class LEdge():
@@ -46,12 +47,10 @@ class LEdge():
             # target is parent output port
             assert dst.direction == PortType.INPUT, dst
         else:
-            try:
-                # target is child input port
-                assert self.parentNode is dst.parentNode.parent, dst
-                assert dst.direction == PortType.INPUT, dst
-            except AssertionError:
-                raise
+            # target is child input port
+            assert self.parentNode is dst.parentNode.parent, dst
+            assert dst.direction == PortType.INPUT, dst
+
         if addToDst:
             self.dsts.append(dst)
         dst.incomingEdges.append(self)
@@ -86,30 +85,33 @@ class LEdge():
         self.srcs.clear()
         self.dsts.clear()
 
-    def toElkJson(self, idStore):
+    def toElkJson(self, idStore, path_prefix):
+        def getId(o):
+            k = pathPrefixApply(path_prefix, o)
+            return str(idStore[k])
         if len(self.dsts) > 1 or len(self.srcs) > 1:
             # hyperedge
             d = {
-                "sources": [(str(idStore[src.parentNode]),
-                             str(idStore[src])) for src in self.srcs],
-                "targets": [(str(idStore[dst.parentNode]),
-                             str(idStore[dst])) for dst in self.dsts],
+                "sources": [(getId(src.parentNode),
+                             getId(src)) for src in self.srcs],
+                "targets": [(getId(dst.parentNode),
+                             getId(dst)) for dst in self.dsts],
             }
         else:
             # regular edge
             src = self.srcs[0]
             dst = self.dsts[0]
             d = {
-                "source": str(idStore[src.parentNode]),
-                "sourcePort": str(idStore[src]),
-                "target": str(idStore[dst.parentNode]),
-                "targetPort": str(idStore[dst]),
+                "source": getId(src.parentNode),
+                "sourcePort": getId(src),
+                "target": getId(dst.parentNode),
+                "targetPort": getId(dst),
             }
-        d["id"] = str(idStore[self])
+        d["id"] = getId(self)
         name = self.name
         if name is None and self.originObj is not None:
             name = repr(self.originObj)
-        d["hwt"] = {"name": name}
+        d["hwMeta"] = {"name": name}
 
         return d
 
