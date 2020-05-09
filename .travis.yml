@@ -1,4 +1,4 @@
-dist: trusty
+dist: bionic
 language: python
 git:
   depth: 1
@@ -6,8 +6,7 @@ cache:
   apt: true
 python:
 - '3.7'
-#- nightly
-install:
+tinstall:
 - cd ..
 - pip install pytest coveralls
 - git clone --depth=1 https://github.com/Nic30/hwtLib.git
