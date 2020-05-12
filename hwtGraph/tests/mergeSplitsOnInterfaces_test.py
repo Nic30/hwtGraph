@@ -32,7 +32,7 @@ plat.beforeHdlArchGeneration.extend([
 
 
 # def unitToLayout(u):
-#     synthesised(u, targetPlatform=plat)
+#     synthesised(u, target_platform=plat)
 #     root = UnitToLNode(u, optimizations=def_optimizations)
 #     idStore = ElkIdStore()
 #     with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as f:

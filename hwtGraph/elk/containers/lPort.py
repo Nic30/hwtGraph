@@ -1,7 +1,8 @@
 from itertools import chain
-from typing import List
+from typing import List, Optional, Tuple
 
 from hwtGraph.elk.containers.constants import PortSide, PortType
+from hwtGraph.elk.containers.pathPrefix import pathPrefixApply
 
 
 class LPort():
@@ -80,7 +81,7 @@ class LPort():
             p = p.parent
         return list(reversed(names))
 
-    def toElkJson(self, idStore):
+    def toElkJson(self, idStore, path_prefix: Optional[Tuple["LNode", ...]]):
         props = {
             "portSide": self.side.name,
         }
@@ -90,8 +91,8 @@ class LPort():
             props["portIndex"] = self.index
 
         return {
-            "id": str(idStore[self]),
-            "hwt": {
+            "id": str(idStore[pathPrefixApply(path_prefix, self)]),
+            "hwMeta": {
                 "level": self.getLevel(),
                 "name": self.name,
             },

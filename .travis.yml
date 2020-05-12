@@ -1,18 +1,17 @@
-dist: trusty
+dist: focal
 language: python
 git:
   depth: 1
 cache:
   apt: true
 python:
-- '3.6'
-#- nightly
+- '3.8'
 install:
 - cd ..
 - pip install pytest coveralls
 - git clone --depth=1 https://github.com/Nic30/hwtLib.git
 - cd hwtLib
-- pip install -r docs/requirements.hwt.txt
+- pip install --upgrade  -r docs/requirements.hwt.txt
 - python setup.py install
 - cd ../hwtGraph
 - python setup.py install

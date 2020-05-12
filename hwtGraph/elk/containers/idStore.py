@@ -8,26 +8,27 @@ class ElkIdStore(dict):
     :attention: First register nodes then register ports
         otherwise id will not be generated correctly
     """
-
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
-        self.reverseDict = {v: k for k, v in self.items()}
+        self.max_id = 0
 
     def register(self, obj):
-        if obj in self:
-            return
-        k = len(self)
+        k = self.get(obj, None)
+        if k is not None:
+            return k
+        k = self.max_id
         self[obj] = k
-        self.reverseDict[k] = obj
+        self.max_id += 1
+        return k
 
     def getMaxId(self):
-        return len(self) - 1
+        return self.max_id - 1
 
     def registerNode(self, node: LNode):
-        self.register(node)
+        return self.register(node)
 
     def registerPort(self, port: LPort):
-        self.register(port)
+        return self.register(port)
 
     def registerEdge(self, edge: LEdge):
-        self.register(edge)
+        return self.register(edge)

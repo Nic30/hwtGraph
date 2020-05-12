@@ -5,7 +5,7 @@ from hwt.hdl.operatorDefs import AllOps
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwt.pyUtils.arrayQuery import arr_all
 from hwt.hdl.types.array import HArray
-from hwt.hdl.statements import HdlStatement
+from hwt.hdl.statement import HdlStatement
 from hwt.hdl.types.bits import Bits
 
 

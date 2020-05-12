@@ -4,7 +4,7 @@ from hwt.hdl.assignment import Assignment
 from hwt.hdl.ifContainter import IfContainer
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
-from hwt.hdl.statements import HdlStatement
+from hwt.hdl.statement import HdlStatement
 from hwt.hdl.switchContainer import SwitchContainer
 from hwt.hdl.types.array import HArray
 from hwt.hdl.value import Value
