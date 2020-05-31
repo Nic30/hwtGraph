@@ -35,7 +35,7 @@ from hwtLib.logic.crcComb import CrcComb
 from hwtLib.mem.cam import Cam
 from hwtLib.mem.cuckooHashTable import CuckooHashTable
 from hwtLib.mem.lutRam import RAM64X1S
-from hwtLib.mem.ram import Ram_dp
+from hwtLib.mem.ram import RamMultiClock
 from hwtLib.peripheral.displays.segment7 import Segment7
 from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
 from hwtLib.peripheral.spi.master import SpiMaster
@@ -194,8 +194,8 @@ class Conversibility_TC(unittest.TestCase):
         u = RAM64X1S()
         convert(u)
 
-    def test_Ram_dp(self):
-        u = Ram_dp()
+    def test_RamMultiClock(self):
+        u = RamMultiClock()
         convert(u)
 
     def test_Segment7(self):
