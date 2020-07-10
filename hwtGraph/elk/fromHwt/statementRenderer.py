@@ -7,7 +7,7 @@ from hwt.hdl.operatorDefs import AllOps
 from hwt.hdl.statement import HdlStatement
 from hwt.hdl.switchContainer import SwitchContainer
 from hwt.hdl.types.array import HArray
-from hwt.hdl.value import Value
+from hwt.hdl.value import HValue
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
@@ -98,7 +98,7 @@ class StatementRenderer():
             self.netCtxs = NetCtxs(node)
 
     def addInputPort(self, node, name,
-                     i: Union[Value, RtlSignalBase],
+                     i: Union[HValue, RtlSignalBase],
                      side=PortSide.WEST):
         """
         Add and connect input port on subnode
@@ -227,7 +227,7 @@ class StatementRenderer():
 
     def createMux(self,
                   output: RtlSignalBase,
-                  inputs: List[Union[RtlSignalBase, Value]],
+                  inputs: List[Union[RtlSignalBase, HValue]],
                   control: Union[RtlSignalBase, List[RtlSignalBase]],
                   connectOut,
                   latched=True):
@@ -240,7 +240,7 @@ class StatementRenderer():
         addInputPort = self.addInputPort
 
         n = root.addNode(node_type)
-        if isinstance(control, (RtlSignalBase, Value)):
+        if isinstance(control, (RtlSignalBase, HValue)):
             control = [control, ]
 
         for c in control:
