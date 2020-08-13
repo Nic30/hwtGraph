@@ -88,7 +88,9 @@ def addStmAsLNode(root: LNode, stm: HdlStatement,
         # render content of statement into container node
         bodyText = toStr(stm)
         n = root.addNode(
-            originObj=stm, bodyText=bodyText)
+            originObj=stm,
+            cls="Process",
+            bodyText=bodyText)
 
         stmPorts[n] = Signal2stmPortCtx(n)
     return n

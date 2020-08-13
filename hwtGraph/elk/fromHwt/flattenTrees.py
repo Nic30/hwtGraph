@@ -93,8 +93,8 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
         reducedNodes, inputEdges = collectNodesInTree(treeRoot, reducibleChildren)
         # if tree is big enoguh for reduction, reduce it to single node
         if len(reducedNodes) > 1:
-            newName = reducedNodes[0].name
-            newNode = root.addNode(newName)
+            newNode = root.addNode(name=reducedNodes[0].name,
+                                   cls=reducedNodes[0].cls)
 
             o = newNode.addPort("", PortType.OUTPUT, PortSide.EAST)
 

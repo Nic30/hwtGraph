@@ -278,7 +278,7 @@ def isUselessEq(op: Operator):
 
 def ternaryAsSimpleAssignment(root, op):
     originObj = Assignment(op.operands[0], op.result, virtualOnly=True)
-    u = root.addNode(originObj=originObj, name="Assignment")
+    u = root.addNode(originObj=originObj, name="Assignment", cls="Operator")
     u.addPort("", PortType.OUTPUT, PortSide.EAST)
     u.addPort("", PortType.INPUT, PortSide.WEST)
     return u
@@ -302,7 +302,9 @@ def LNodeAddPortFromHdl(node, origin: Union[Interface, HdlPortItem],
 
 
 def ValueAsLNode(root: LNode, val: HValue):
-    u = root.addNode(originObj=val, bodyText=toStr(
-        val), portConstraint=PortConstraints.FREE)
+    u = root.addNode(originObj=val,
+                     cls="Operator",
+                     bodyText=toStr(val),
+                     portConstraint=PortConstraints.FREE)
     u.addPort(None, PortType.OUTPUT, PortSide.EAST)
     return u

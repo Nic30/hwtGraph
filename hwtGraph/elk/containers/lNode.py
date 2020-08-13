@@ -29,12 +29,13 @@ class LNode():
         as the _shared_component_with LNode
     """
 
-    def __init__(self, parent: "LNode"=None, name: str=None,
+    def __init__(self, parent: "LNode"=None, name: str=None, cls: str=None,
                  originObj=None, node2lnode=None, bodyText=None):
         if name is not None:
             assert isinstance(name, str)
         self.originObj = originObj
         self.name = name
+        self.cls = cls
         self.bodyText = bodyText
 
         self.west = []
@@ -84,10 +85,10 @@ class LNode():
         self.getPortSideView(side).append(port)
         return port
 
-    def addNode(self, name: str=None, originObj=None,
+    def addNode(self, name: str=None, cls: str=None, originObj=None,
                 portConstraint=PortConstraints.FIXED_ORDER,
                 bodyText=None) -> "LNode":
-        n = LNode(self, name=name, originObj=originObj,
+        n = LNode(self, name=name, cls=cls, originObj=originObj,
                   node2lnode=self._node2lnode, bodyText=bodyText)
         n.portConstraints = portConstraint
         if self._node2lnode is not None:
@@ -173,11 +174,13 @@ class LNode():
         }
         hw_meta = {
             "name": self.name,
+            "cls": self.cls,
         }
         d = {
             "hwMeta": hw_meta,
             "properties": props
         }
+        hideChildren = False
         if self.bodyText is not None:
             hw_meta["bodyText"] = self.bodyText
 
@@ -186,7 +189,7 @@ class LNode():
             self.toElkJson_registerPorts(idStore, None)
         else:
             d["id"] = str(idStore[pathPrefixApply(path_prefix, self)])
-            d["hideChildren"] = True
+            hideChildren = True
             # if self.parent.parent is not None:
             #    props["org.eclipse.elk.noLayout"] = True
 
@@ -209,12 +212,12 @@ class LNode():
                 nodes.append(ch.toElkJson(idStore, isTop=False, path_prefix=path_prefix))
 
             nodes.sort(key=lambda n: n["id"])
-            d["children"] = nodes
+            d["_children" if hideChildren else "children"] = nodes
 
             for e in edges:
                 idStore.registerEdge(pathPrefixApply(path_prefix, e))
 
-            d["edges"] = [e.toElkJson(idStore, path_prefix) for e in edges]
+            d["_edges" if hideChildren else "edges"] = [e.toElkJson(idStore, path_prefix) for e in edges]
 
         hw_meta["maxId"] = idStore.getMaxId()
 

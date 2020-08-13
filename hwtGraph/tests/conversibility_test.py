@@ -50,10 +50,10 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
-    # import json
-    # from pprint import pprint
-    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
-    #     json.dump(data, fp, indent=2)
+    import json
+    from pprint import pprint
+    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+        json.dump(data, fp, indent=2)
     # pprint(data)
     return g, data
 
@@ -152,10 +152,12 @@ class Conversibility_TC(unittest.TestCase):
 
     def test_Crc(self):
         u = Crc()
+        u.DATA_WIDTH = 8
         convert(u)
 
     def test_CrcComb(self):
         u = CrcComb()
+        u.DATA_WIDTH = 8
         convert(u)
 
     def test_CuckooHashTable(self):

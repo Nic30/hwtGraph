@@ -206,7 +206,7 @@ def mergeSplitsOnInterfaces(root: LNode):
             continue
 
         name = "SPLIT" if srcPort.direction == PortType.OUTPUT else "CONCAT"
-        newSplitNode = root.addNode(name)
+        newSplitNode = root.addNode(name=name, cls="Operator")
         copyPort(srcPort, newSplitNode, True, "")
         n = splitsAndConcats[0][0]
         for i in range(max(len(n.west),

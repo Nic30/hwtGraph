@@ -81,7 +81,7 @@ def extractSplits(root: LNode):
                 srcPort = srcPorts[0]
                 dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
                 sliceNode = root.addNode(
-                    "SLICE", originObj=InterfaceSplitInfo(sliceParts))
+                    name="SLICE", cls="Operator", originObj=InterfaceSplitInfo(sliceParts))
                 inputPort = sliceNode.addPort(
                     "", PortType.INPUT, PortSide.WEST)
 

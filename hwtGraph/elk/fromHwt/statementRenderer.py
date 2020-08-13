@@ -184,7 +184,7 @@ class StatementRenderer():
                            addr: RtlSignalBase,
                            inp: RtlSignalBase,
                            connectOut):
-        n = self.node.addNode(RAM_WRITE)
+        n = self.node.addNode(RAM_WRITE, cls="Operator")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
 
@@ -201,7 +201,7 @@ class StatementRenderer():
                           addr: RtlSignalBase,
                           out: RtlSignalBase,
                           connectOut):
-        n = self.node.addNode(RAM_READ)
+        n = self.node.addNode(RAM_READ, cls="Operator")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
 
@@ -217,7 +217,7 @@ class StatementRenderer():
                      clk: RtlSignalBase,
                      i: RtlSignalBase,
                      connectOut):
-        n = self.node.addNode(FF)
+        n = self.node.addNode(FF, cls="Operator")
         self.addInputPort(n, "clk", clk)
         self.addInputPort(n, "i", i)
 
@@ -239,7 +239,7 @@ class StatementRenderer():
         root = self.node
         addInputPort = self.addInputPort
 
-        n = root.addNode(node_type)
+        n = root.addNode(node_type, cls="Operator")
         if isinstance(control, (RtlSignalBase, HValue)):
             control = [control, ]
 
@@ -289,7 +289,7 @@ class StatementRenderer():
                 for i in assig.indexes:
                     assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
                 body_text = "".join(["[%d]" % int(i) for i in assig.indexes])
-                n = self.node.addNode(ITEM_SET, bodyText=body_text)
+                n = self.node.addNode(ITEM_SET, cls="Operator", bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
                                            assig.dst if connectOut else None)
@@ -383,7 +383,7 @@ class StatementRenderer():
         else:
             inputNames = [None for _ in op.operands]
 
-        u = root.addNode(originObj=op, name=op.operator.id)
+        u = root.addNode(originObj=op, name=op.operator.id, cls="Operator")
         u.addPort(None, PortType.OUTPUT, PortSide.EAST)
 
         for inpName, op in zip(inputNames, op.operands):

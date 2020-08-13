@@ -49,7 +49,7 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
 
     # create subunits
     for su in u._units:
-        n = root.addNode(name=su._name, originObj=su)
+        n = root.addNode(name=su._name, cls="Unit", originObj=su)
         UnitToLNode(su, n, toL, optimizations)
 
     # create subunits from statements
