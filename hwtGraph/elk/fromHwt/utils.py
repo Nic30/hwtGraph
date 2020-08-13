@@ -7,7 +7,7 @@ from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
 from hwt.hdl.portItem import HdlPortItem
 from hwt.hdl.types.defs import BIT
-from hwt.hdl.value import Value
+from hwt.hdl.value import HValue
 from hwt.pyUtils.uniqList import UniqList
 from hwt.serializer.hwt import HwtSerializer
 from hwt.synthesizer.interface import Interface
@@ -301,7 +301,7 @@ def LNodeAddPortFromHdl(node, origin: Union[Interface, HdlPortItem],
     return p
 
 
-def ValueAsLNode(root: LNode, val: Value):
+def ValueAsLNode(root: LNode, val: HValue):
     u = root.addNode(originObj=val, bodyText=toStr(
         val), portConstraint=PortConstraints.FREE)
     u.addPort(None, PortType.OUTPUT, PortSide.EAST)
