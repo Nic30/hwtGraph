@@ -83,12 +83,12 @@ class LPort():
 
     def toElkJson(self, idStore, path_prefix: Optional[Tuple["LNode", ...]]):
         props = {
-            "portSide": self.side.name,
+            "side": self.side.name,
         }
 
         if self.parentNode.portConstraints.isOrderFixed():
             assert isinstance(self.index, int), self.index
-            props["portIndex"] = self.index
+            props["index"] = self.index
 
         return {
             "id": str(idStore[pathPrefixApply(path_prefix, self)]),
