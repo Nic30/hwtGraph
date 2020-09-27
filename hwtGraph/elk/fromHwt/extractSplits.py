@@ -1,8 +1,6 @@
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
-from hwt.hdl.types.array import HArray
-from hwt.hdl.types.bits import Bits
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 
@@ -28,50 +26,29 @@ def extractSplits(root: LNode):
     # search from "sig" side (look at doc string)
     for s in signals:
         if len(s.drivers) == 1 and len(s.endpoints) > 1:
-            expectedItems = None
             sliceParts = []
             for ep in s.endpoints:
                 if isinstance(ep, Assignment) and not ep.indexes and ep.src.hidden:
                     op = ep.src.origin
                 else:
                     op = ep
+
                 if isinstance(op, Operator)\
                         and op.operator == AllOps.INDEX\
                         and op.operands[0] is s:
                     index = op.operands[1]
                     if isConst(index):
-                        i = index.staticEval().to_py()
-                        if isinstance(i, int):
-                            i = slice(i + 1, i)
+                        sliceRange = index.staticEval().to_py()
+                        if isinstance(sliceRange, int):
+                            sliceRange = slice(sliceRange + 1, sliceRange)
 
-                        t = s._dtype
-                        if isinstance(t, Bits):
-                            w = t.bit_length()
-                        elif isinstance(t, HArray):
-                            w = int(t.size)
-                        else:
-                            # slice on unexpected data type
-                            raise NotImplementedError(t)
-                        sliceW = i.start - i.stop
-                        items = w // sliceW
-                        if expectedItems is None:
-                            expectedItems = items
-                        else:
-                            if expectedItems != items:
-                                continue
-
-                        if items * sliceW == w:
-                            sliceI = i.stop // sliceW
-                            if ep not in toL:
-                                continue
-                            sliceParts.append((sliceI, ep))
+                        if ep not in toL:
                             continue
+                        sliceParts.append((sliceRange, ep))
 
-            compatible = expectedItems is not None and expectedItems == len(
-                sliceParts)
-            if compatible:
+            if sliceParts: 
                 # reduce to slice
-                sliceParts.sort(reverse=True)
+                sliceParts.sort(key=lambda x: x[0].start)
                 n = toL[sliceParts[0][1]]
                 p = n.west[0]
                 if not p.incomingEdges:
@@ -81,13 +58,16 @@ def extractSplits(root: LNode):
                 srcPort = srcPorts[0]
                 dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
                 sliceNode = root.addNode(
-                    name="SLICE", cls="Operator", originObj=InterfaceSplitInfo(sliceParts))
+                    name="SLICE", cls="Operator", originObj=InterfaceSplitInfo(x[1] for x in sliceParts))
                 inputPort = sliceNode.addPort(
                     "", PortType.INPUT, PortSide.WEST)
 
                 # create new sliceNode
-                for i, assig in sliceParts:
-                    name = "[%d]" % i
+                for sliceRange, assig in sliceParts:
+                    if sliceRange.start - sliceRange.stop == 1:
+                        name = "[%d]" % sliceRange.stop
+                    else:
+                        name = "[%d:%d]" % (sliceRange.start, sliceRange.stop)
                     outPort = sliceNode.addPort(
                         name, PortType.OUTPUT, PortSide.EAST)
                     oldAssigNode = toL[assig]

@@ -2,11 +2,11 @@ from hwt.code import Concat
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import isConst, Operator
 from hwt.hdl.operatorDefs import AllOps
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
-from hwt.pyUtils.arrayQuery import arr_all
-from hwt.hdl.types.array import HArray
 from hwt.hdl.statement import HdlStatement
+from hwt.hdl.types.array import HArray
 from hwt.hdl.types.bits import Bits
+from hwt.pyUtils.arrayQuery import arr_all
+from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 
 
 def indexedAssignmentsToConcatenation(netlist):
@@ -52,7 +52,7 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
                 isIndexInBramWrite = isinstance(s._dtype, HArray)\
                     and arr_all(ep.result.endpoints,
                                 lambda ep: isinstance(ep, HdlStatement)\
-                                           and ep._is_completly_event_dependent)
+                                           and ep._event_dependent_from_branch == 0)
                 if not isIndexInBramWrite and ep.result.hidden:
                     epsToReplace.append(ep)
 

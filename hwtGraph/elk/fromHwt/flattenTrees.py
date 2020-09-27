@@ -77,7 +77,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
         if ch.children:
             flattenTrees(ch, nodeSelector)
 
-    # collect all nodes which can be potentialy reduced
+    # collect all nodes which can be potentially reduced
     reducibleChildren = set()
     for ch in root.children:
         if nodeSelector(ch):
@@ -87,11 +87,11 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
         # try to pick a node from random tree and search it's root
         _treeRoot = reducibleChildren.pop()
         reducibleChildren.add(_treeRoot)
-        # we need to keep order of inputs, use preorder
+        # we need to keep order of inputs, use pre-order
         treeRoot = searchRootOfTree(reducibleChildren, _treeRoot)
 
         reducedNodes, inputEdges = collectNodesInTree(treeRoot, reducibleChildren)
-        # if tree is big enoguh for reduction, reduce it to single node
+        # if tree is big enough for reduction, reduce it to single node
         if len(reducedNodes) > 1:
             newNode = root.addNode(name=reducedNodes[0].name,
                                    cls=reducedNodes[0].cls)
@@ -107,7 +107,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
 
             port_names = []
             bit_offset = 0
-            for i, (iN, iP, iE) in reversed(list(enumerate(inputEdges))):
+            for i, (iN, iP, iE) in list(enumerate(inputEdges)):
                 name = None
                 index = len(inputEdges) - i - 1
                 if hasattr(iE.originObj, "_dtype"):
@@ -122,7 +122,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
                     assert bit_offset == 0, "can not mix implicitly indexed and bit indexed array items"
                     name = "[%d]" % (index)
                 port_names.append(name)
-            port_names = list(reversed(port_names))
+
             for name, (_, iP, iE) in zip(port_names, inputEdges):
                 inp = newNode.addPort(name,
                                       PortType.INPUT, PortSide.WEST)

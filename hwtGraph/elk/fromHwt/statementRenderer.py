@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Union, List, Optional, Tuple
 
 from hwt.hdl.assignment import Assignment
@@ -8,6 +9,7 @@ from hwt.hdl.statement import HdlStatement
 from hwt.hdl.switchContainer import SwitchContainer
 from hwt.hdl.types.array import HArray
 from hwt.hdl.value import HValue
+from hwt.pyUtils.arrayQuery import arr_any
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
@@ -16,8 +18,6 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq, NetCtxs, NetCtx
-from hwt.pyUtils.arrayQuery import arr_any
-from itertools import chain
 
 FF = "FF"
 MUX = "MUX"
@@ -45,7 +45,7 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
     Detect RAM ports in If statement
 
     :param stm: statement to detect the ram ports in
-    :param current_en: curent en/clk signal
+    :param current_en: current en/clk signal
     """
     if stm.ifFalse or stm.elIfs:
         return
@@ -260,7 +260,7 @@ class StatementRenderer():
         inputs = [src, ]
         isBitToVectorConv = False
         if assig.indexes:
-            #if len(assig.indexes) > 1:
+            # if len(assig.indexes) > 1:
             #    raise NotImplementedError()
             i = assig.indexes[0]
             if len(assig.indexes) == 1\
@@ -371,7 +371,7 @@ class StatementRenderer():
         root = self.node
         if isUselessTernary(op):
             # is in format 1 if cond else 0
-            # retunr NetCtx of cond directly
+            # return NetCtx of cond directly
             cond = op.operands[0]
             return self.getInputNetCtx(cond)
         elif isUselessEq(op):
@@ -380,6 +380,17 @@ class StatementRenderer():
 
         if op.operator == AllOps.INDEX:
             inputNames = ["in", "index"]
+        elif op.operator == AllOps.CONCAT:
+            inputNames = []
+            bit_offset = 0
+            for o in op.operands:
+                w = o._dtype.bit_length()
+                if w > 1:
+                    name = "[%d:%d]" % (w + bit_offset, bit_offset)
+                else:
+                    name = "[%d]" % bit_offset
+                inputNames.append(name)
+                bit_offset += w
         else:
             inputNames = [None for _ in op.operands]
 
@@ -501,9 +512,9 @@ class StatementRenderer():
             return self.createAssignment(stm, connectOut)
 
         encl = stm._enclosed_for
-        full_ev_dep = stm._is_completly_event_dependent
+        full_ev_dep = stm._event_dependent_from_branch == 0
         par = stm.parentStm
-        parent_ev_dep = par is not None and par._now_is_event_dependent
+        parent_ev_dep = par is not None and par._event_dependent_from_branch is not None
 
         # render IfContainer instances
         if isinstance(stm, IfContainer):

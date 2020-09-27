@@ -3,10 +3,10 @@ from typing import Dict
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import isConst
 from hwt.hdl.statement import HdlStatement
+from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr, NetCtxs
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 
 
 def walkStatementsForSig(statments, s):
@@ -16,6 +16,7 @@ def walkStatementsForSig(statments, s):
 
 
 class Signal2stmPortCtx():
+
     def __init__(self, stmNode: LNode):
         self.stmNode = stmNode
         self.data = {}
@@ -59,6 +60,7 @@ class Signal2stmPortCtx():
 
 
 class VirtualLNode():
+
     def __init__(self, parent: LNode, stm: HdlStatement):
         self.originObj = stm
         self.parent = parent
@@ -81,7 +83,7 @@ def addStmAsLNode(root: LNode, stm: HdlStatement,
         ctx.addDriver(n.east[0])
 
     elif isOnlyAssig:
-        # inline operatos in assingment to parent node
+        # inline operators in assignment to parent node
         n = toL[stm] = VirtualLNode(root, stm)
 
     else:

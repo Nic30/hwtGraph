@@ -5,11 +5,10 @@ from hwtGraph.elk.fromHwt.extractSplits import extractSplits
 from hwtGraph.elk.fromHwt.flattenPorts import flattenPorts
 from hwtGraph.elk.fromHwt.flattenTrees import flattenTrees
 from hwtGraph.elk.fromHwt.mergeSplitsOnInterfaces import mergeSplitsOnInterfaces
-from hwtGraph.elk.fromHwt.netlistPreprocessors import indexedAssignmentsToConcatenation,\
+from hwtGraph.elk.fromHwt.netlistPreprocessors import indexedAssignmentsToConcatenation, \
     unhideResultsOfIndexingAndConcatOnPublicSignals
 from hwtGraph.elk.fromHwt.reduceUselessAssignments import reduceUselessAssignments
 from hwtGraph.elk.fromHwt.resolveSharedConnections import resolveSharedConnections
-
 
 DEFAULT_PLATFORM = DummyPlatform()
 DEFAULT_PLATFORM.beforeHdlArchGeneration.extend([
@@ -21,7 +20,7 @@ DEFAULT_LAYOUT_OPTIMIZATIONS = [
     # optimizations
     reduceUselessAssignments,
     extractSplits,
-    lambda root: flattenTrees(root, lambda node: node.name == "CONCAT"),
+    lambda root: flattenTrees(root, lambda node: node.cls == "Operator" and node.name == "CONCAT"),
     mergeSplitsOnInterfaces,
     resolveSharedConnections,
     sortStatementPorts,
