@@ -1,8 +1,8 @@
 from itertools import chain
-from typing import List, Optional, Tuple
+from typing import List
 
+from hwt.synthesizer.componentPath import ComponentPath
 from hwtGraph.elk.containers.constants import PortSide, PortType
-from hwtGraph.elk.containers.pathPrefix import pathPrefixApply
 
 
 class LPort():
@@ -24,9 +24,9 @@ class LPort():
     """
 
     def __init__(self, parent: "LNode", direction: PortType,
-                 side: PortSide, name: str=None):
+                 side: PortSide, name: str=None, originObj=None):
         super(LPort, self).__init__()
-        self.originObj = None
+        self.originObj = originObj
         self.parent = parent
         if isinstance(parent, LPort):
             self.parentNode = parent.parentNode
@@ -56,6 +56,8 @@ class LPort():
         return lvl
 
     def iterEdges(self, filterSelfLoops=False):
+        assert isinstance(self.incomingEdges, list)
+        assert isinstance(self.outgoingEdges, list)
         it = chain(self.incomingEdges, self.outgoingEdges)
         if filterSelfLoops:
             for e in it:
@@ -81,7 +83,7 @@ class LPort():
             p = p.parent
         return list(reversed(names))
 
-    def toElkJson(self, idStore, path_prefix: Optional[Tuple["LNode", ...]]):
+    def toElkJson(self, idStore, path_prefix: ComponentPath):
         props = {
             "side": self.side.name,
         }
@@ -91,7 +93,7 @@ class LPort():
             props["index"] = self.index
 
         return {
-            "id": str(idStore[pathPrefixApply(path_prefix, self)]),
+            "id": str(idStore[path_prefix / self]),
             "hwMeta": {
                 "level": self.getLevel(),
                 "name": self.name,

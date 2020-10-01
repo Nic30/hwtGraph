@@ -2,7 +2,10 @@ import unittest
 
 from hwt.code import If
 from hwt.interfaces.std import Signal
+from hwt.serializer.utils import RtlSignal_sort_key, \
+    HdlStatement_sort_key
 from hwt.synthesizer.unit import Unit
+from hwt.synthesizer.utils import synthesised
 from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import UnitToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
@@ -42,7 +45,6 @@ from hwtLib.peripheral.spi.master import SpiMaster
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
-from hwt.synthesizer.utils import synthesised
 
 
 def convert(u):
@@ -50,13 +52,35 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
-    # import json
+    import json
+    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+        json.dump(data, fp, indent=2, sort_keys=True)
     # from pprint import pprint
-    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
-    #     json.dump(data, fp, indent=2)
     # pprint(data)
     return g, data
 
+
+def assert_Unit_lexical_eq(u0: Unit, u1: Unit):
+    signals0 = sorted(u0._ctx.signals, key=RtlSignal_sort_key)
+    signals1 = sorted(u0._ctx.signals, key=RtlSignal_sort_key)
+    assert len(signals0) == len(signals1)
+    for s0, s1 in zip(signals0, signals1):
+        assert repr(s0) == repr(s1)
+
+    statements0 = sorted(u0._ctx.statements, key=HdlStatement_sort_key)
+    statements1 = sorted(u0._ctx.statements, key=HdlStatement_sort_key)
+    assert len(statements0) == len(statements1)
+    for s0, s1 in zip(statements0, statements1):
+        assert repr(s0) == repr(s1)
+
+    if u0._units is None:
+        assert u1._units is None
+    else:
+        assert len(u0._units) == len(u1._units)
+        for c_u0, c_u1 in zip(u0._units, u1._units):
+            assert c_u0._name == c_u1._name
+            assert_Unit_lexical_eq(c_u0, c_u1)
+        
 
 class DirectFF_sig(Unit):
 
@@ -83,13 +107,14 @@ class AxiStreamFullDuplex_wire(Unit):
 
 
 class AxiStreamFullDuplex_wire_nested(Unit):
+
     def _declr(self):
         AxiStreamFullDuplex_wire._declr(self)
         self.core = AxiStreamFullDuplex_wire()
 
     def _impl(self):
         self.core.dataIn(self.dataIn)
-        self.dataOut(self.dataOut)
+        self.dataOut(self.core.dataOut)
 
 
 class Conversibility_TC(unittest.TestCase):
@@ -245,10 +270,68 @@ class Conversibility_TC(unittest.TestCase):
         u = AxiStreamFullDuplex_wire()
         convert(u)
 
+    def test_AxiStreamFullDuplex_wire_nested(self):
+        u = AxiStreamFullDuplex_wire_nested()
+        convert(u)
+
+    def test_output_is_deterministc(self):
+        components = [
+            DirectFF_sig,
+            AxiStreamFullDuplex_wire,
+            AxiStreamFullDuplex_wire_nested,
+            AxiLite_to_Axi,
+            (AxiBuff, (Axi4Lite,)),
+            Axi4streamToMem,
+            AxiTester,
+            RStrictOrderInterconnect,
+            Axi_rDatapump,
+            Axi_wDatapump,
+            Cdc,
+            ClkDiv3,
+            EthAddrUpdater,
+            ArrayIntfExample,
+            SimpleAsyncRam,
+            Latch,
+            IndexingInernJoin,
+            IndexingInernRangeSplit,
+            IndexingInernSplit,
+            Showcase0,
+            SimpleUnitAxiStream,
+            ConstDriverUnit,
+            BinToOneHot,
+            BitonicSorter,
+            GrayCntr,
+            Crc,
+            CrcComb,
+            Cam,
+            CuckooHashTable,
+            RAM64X1S,
+            RamMultiClock,
+            Segment7,
+            I2cMasterBitCtrl,
+            SpiMaster,
+            ArrayBuff_writer,
+            ArrayItemGetter,
+            MMU_2pageLvl,
+        ]
+        for comp in components:
+            if isinstance(comp, tuple):
+                comp, args = comp
+                u0 = comp(*args)
+                u1 = comp(*args)
+            else:
+                u0 = comp()
+                u1 = comp()                
+            d0 = convert(u0)[1]
+            d1 = convert(u1)[1]
+            assert_Unit_lexical_eq(u0, u1)
+            self.assertDictEqual(d0, d1, comp.__name__)
+        
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # suite.addTest(Conversibility_TC('test_EthAddrUpdater'))
+    
+    # suite.addTest(Conversibility_TC('test_output_is_deterministc'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

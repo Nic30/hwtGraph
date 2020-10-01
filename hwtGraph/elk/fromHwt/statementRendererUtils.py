@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import isConst
@@ -9,9 +9,11 @@ from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr, NetCtxs
 
 
-def walkStatementsForSig(statments, s):
-    for stm in statments:
+def walkStatementsForSig(statements: List[HdlStatement], s: RtlSignalBase):
+    assert isinstance(statements, list)
+    for stm in statements:
         if s in stm._outputs:
+            assert isinstance(stm._outputs, list)
             yield stm
 
 
@@ -54,7 +56,7 @@ class Signal2stmPortCtx():
         else:
             raise ValueError(portType)
 
-        p = self.stmNode.addPort(sig.name, portType, side)
+        p = self.stmNode.addPort(sig.name, portType, side, originObj=sig)
         self.data[k] = p
         return p
 
@@ -95,4 +97,5 @@ def addStmAsLNode(root: LNode, stm: HdlStatement,
             bodyText=bodyText)
 
         stmPorts[n] = Signal2stmPortCtx(n)
+
     return n

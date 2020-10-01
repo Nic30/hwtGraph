@@ -19,6 +19,7 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq, NetCtxs, NetCtx
 
+
 FF = "FF"
 MUX = "MUX"
 LATCHED_MUX = "LATCHED_MUX"
@@ -151,11 +152,12 @@ class StatementRenderer():
 
     def addOutputPort(self, node: LNode, name: str,
                       out: Optional[Union[RtlSignalBase, LPort]],
+                      origObj: Union[RtlSignalBase, LPort],
                       side=PortSide.EAST):
         """
         Add and connect output port on subnode
         """
-        oPort = node.addPort(name, PortType.OUTPUT, side)
+        oPort = node.addPort(name, PortType.OUTPUT, side, originObj=origObj)
         if out is not None:
             if isinstance(out, LPort):
                 self.node.addEdge(oPort, out)
@@ -191,7 +193,7 @@ class StatementRenderer():
         self.addInputPort(n, "addr", addr)
         self.addInputPort(n, "in", inp)
 
-        memPort = self.addOutputPort(n, "mem", mem if connectOut else None)
+        memPort = self.addOutputPort(n, "mem", mem if connectOut else None, origObj=mem)
 
         return n, memPort
 
@@ -208,7 +210,7 @@ class StatementRenderer():
         self.addInputPort(n, "addr", addr)
         self.addInputPort(n, "mem", mem)
 
-        readPort = self.addOutputPort(n, "out", out if connectOut else None)
+        readPort = self.addOutputPort(n, "out", out if connectOut else None, origObj=out)
 
         return n, readPort
 
@@ -221,7 +223,7 @@ class StatementRenderer():
         self.addInputPort(n, "clk", clk)
         self.addInputPort(n, "i", i)
 
-        oPort = self.addOutputPort(n, "o", o if connectOut else None)
+        oPort = self.addOutputPort(n, "o", o if connectOut else None, origObj=o)
 
         return n, oPort
 
@@ -242,15 +244,19 @@ class StatementRenderer():
         n = root.addNode(node_type, cls="Operator")
         if isinstance(control, (RtlSignalBase, HValue)):
             control = [control, ]
+        else:
+            assert isinstance(control, (list, tuple))
 
         for c in control:
             addInputPort(n, "", c, PortSide.SOUTH)
 
+        assert isinstance(inputs, (list, tuple))
         for i in inputs:
             addInputPort(n, "", i)
 
         oPort = self.addOutputPort(n, "",
-                                   output if connectOut else None)
+                                   output if connectOut else None,
+                                   origObj=output)
 
         return n, oPort
 
@@ -292,8 +298,10 @@ class StatementRenderer():
                 n = self.node.addNode(ITEM_SET, cls="Operator", bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
-                                           assig.dst if connectOut else None)
+                                           assig.dst if connectOut else None,
+                                           oriObj=assig.dst)
                 return n, oPort
+
         elif connectOut:
             dst = assig.dst
             rootNetCtxs = self.rootNetCtxs
@@ -397,8 +405,8 @@ class StatementRenderer():
         u = root.addNode(originObj=op, name=op.operator.id, cls="Operator")
         u.addPort(None, PortType.OUTPUT, PortSide.EAST)
 
-        for inpName, op in zip(inputNames, op.operands):
-            self.addInputPort(u, inpName, op)
+        for inpName, _op in zip(inputNames, op.operands):
+            self.addInputPort(u, inpName, _op)
 
         return u
 
@@ -537,6 +545,7 @@ class StatementRenderer():
                     ren = self.renderForSignal(stms, s, False)
                     if ren is not None:
                         inputs.append(ren[1])
+
                 if stm.ifFalse:
                     ren = self.renderForSignal(stm.ifFalse, s, False)
                     if ren is not None:

@@ -3,6 +3,7 @@ from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
+from hwt.serializer.utils import RtlSignal_sort_key
 
 
 class InterfaceSplitInfo(tuple):
@@ -21,7 +22,7 @@ def extractSplits(root: LNode):
     :param toL: dictionary {hdl object: layout object}
     """
     toL = root._node2lnode
-    signals = root.originObj._ctx.signals
+    signals = sorted(root.originObj._ctx.signals, key=RtlSignal_sort_key)
 
     # search from "sig" side (look at doc string)
     for s in signals:

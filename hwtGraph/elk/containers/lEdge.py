@@ -1,5 +1,7 @@
+from typing import List
+
+from hwt.synthesizer.componentPath import ComponentPath
 from hwtGraph.elk.containers.constants import PortType
-from hwtGraph.elk.containers.pathPrefix import pathPrefixApply
 
 
 class LEdge():
@@ -13,12 +15,12 @@ class LEdge():
     :ivar ~.dsts: list of LPort instances where this edge ends
     """
 
-    def __init__(self, parentNode: "LNode", srcs, dsts,
+    def __init__(self, parentNode: "LNode", srcs: List["LPort"], dsts: List["LPort"],
                  name: str=None, originObj=None):
         self.parentNode = parentNode
         if name is not None:
             assert isinstance(name, str)
-
+        
         self.name = name
         self.originObj = originObj
 
@@ -68,11 +70,8 @@ class LEdge():
             assert src.direction == PortType.INPUT, src
         else:
             # source is child output port
-            try:
-                assert self.parentNode is src.parentNode.parent, src
-                assert src.direction == PortType.OUTPUT, src
-            except AssertionError as ex:
-                raise 
+            assert self.parentNode is src.parentNode.parent, src
+            assert src.direction == PortType.OUTPUT, src
         if addToSrc:
             self.srcs.append(src)
         src.outgoingEdges.append(self)
@@ -85,9 +84,9 @@ class LEdge():
         self.srcs.clear()
         self.dsts.clear()
 
-    def toElkJson(self, idStore, path_prefix):
+    def toElkJson(self, idStore, path_prefix: ComponentPath):
         def getId(o):
-            k = pathPrefixApply(path_prefix, o)
+            k = path_prefix / o
             return str(idStore[k])
         if len(self.dsts) > 1 or len(self.srcs) > 1:
             # hyperedge

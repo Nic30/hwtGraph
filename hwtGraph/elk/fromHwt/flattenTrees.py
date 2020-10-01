@@ -1,10 +1,11 @@
 from typing import Callable, Set
 
+from hwt.pyUtils.uniqList import UniqList
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 
 
-def searchRootOfTree(reducibleChildren: Set[LNode], nodeFromTree: LNode):
+def searchRootOfTree(reducibleChildren: Set[LNode], nodeFromTree: LNode, removedNodes: Set[LNode]):
     """
     Walk tree of nodes to root
 
@@ -19,7 +20,7 @@ def searchRootOfTree(reducibleChildren: Set[LNode], nodeFromTree: LNode):
             return nodeFromTree
 
         nextNode = out_e[0].dsts[0].parentNode
-        if nextNode in reducibleChildren:
+        if nextNode in reducibleChildren and nextNode not in removedNodes:
             # can reduce node, walk the tree to root
             nodeFromTree = nextNode
         else:
@@ -27,7 +28,7 @@ def searchRootOfTree(reducibleChildren: Set[LNode], nodeFromTree: LNode):
             return nodeFromTree
 
 
-def collectNodesInTree(treeRoot: LNode, reducibleChildren: Set[LNode]):
+def collectNodesInTree(treeRoot: LNode, reducibleChildren: Set[LNode], reducedNodesSet: Set[LNode]):
     """
     Collect nodes which will be reduced and input nodes of tree for tree of nodes.
 
@@ -39,11 +40,10 @@ def collectNodesInTree(treeRoot: LNode, reducibleChildren: Set[LNode]):
     # List[Tuple[LNode, LPort, LEdge]]
     inputEdges = []
     # List[LNode]
+    # :note: we are using the list because we want to keep the order of the operations
     reducedNodes = []
-    # Set[LNode]
-    reducedNodesSet = set()
-    # An iterative process to print preorder traveral of tree
-    # List[Typle[LNode, LPort, LEdge]]
+    # An iterative process to print pre-order traversal of tree
+    # List[Tuple[LNode, LPort, LEdge]]
     nodeStack = []
     nodeStack.append((treeRoot, None, None))
 
@@ -73,24 +73,24 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
     :attention: selected nodes has to have single output
                 and has to be connected to nets with single driver
     """
+    assert isinstance(root.children, list)
     for ch in root.children:
         if ch.children:
             flattenTrees(ch, nodeSelector)
 
     # collect all nodes which can be potentially reduced
-    reducibleChildren = set()
-    for ch in root.children:
-        if nodeSelector(ch):
-            reducibleChildren.add(ch)
+    reducibleChildren = UniqList(ch for ch in root.children if nodeSelector(ch))
 
-    while reducibleChildren:
+    removedNodes = set()
+    for _treeRoot in reducibleChildren:
         # try to pick a node from random tree and search it's root
-        _treeRoot = reducibleChildren.pop()
-        reducibleChildren.add(_treeRoot)
-        # we need to keep order of inputs, use pre-order
-        treeRoot = searchRootOfTree(reducibleChildren, _treeRoot)
+        if _treeRoot in removedNodes:
+            continue
 
-        reducedNodes, inputEdges = collectNodesInTree(treeRoot, reducibleChildren)
+        # we need to keep order of inputs, use pre-order
+        treeRoot = searchRootOfTree(reducibleChildren, _treeRoot, removedNodes)
+
+        reducedNodes, inputEdges = collectNodesInTree(treeRoot, reducibleChildren, removedNodes)
         # if tree is big enough for reduction, reduce it to single node
         if len(reducedNodes) > 1:
             newNode = root.addNode(name=reducedNodes[0].name,
@@ -99,6 +99,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
             o = newNode.addPort("", PortType.OUTPUT, PortSide.EAST)
 
             oEdges = treeRoot.east[0].outgoingEdges
+            # intented copy of oEdges
             for outputedge in list(oEdges):
                 dsts = list(outputedge.dsts)
                 assert len(dsts) > 0
@@ -107,7 +108,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
 
             port_names = []
             bit_offset = 0
-            for i, (iN, iP, iE) in list(enumerate(inputEdges)):
+            for i, (iN, iP, iE) in enumerate(inputEdges):
                 name = None
                 index = len(inputEdges) - i - 1
                 if hasattr(iE.originObj, "_dtype"):
@@ -131,6 +132,3 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
 
             for n in reducedNodes:
                 root.children.remove(n)
-                reducibleChildren.remove(n)
-        else:
-            reducibleChildren.remove(reducedNodes[0])

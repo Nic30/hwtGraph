@@ -1,4 +1,5 @@
 from hwt.hdl.assignment import Assignment
+from hwt.pyUtils.uniqList import UniqList
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.utils import getSinglePort
@@ -12,7 +13,7 @@ def reduceUselessAssignments(root: LNode):
         if n.children:
             reduceUselessAssignments(n)
 
-    do_update = False
+    to_remove = set()
     for n in root.children:
         if isinstance(n.originObj, Assignment)\
                 and not n.originObj.indexes\
@@ -21,15 +22,11 @@ def reduceUselessAssignments(root: LNode):
             if isinstance(src, RtlSignalBase) and src.hidden:
                 continue
 
-            if not do_update:
-                nodes = set(root.children)
-                do_update = True
-
-            nodes.remove(n)
+            to_remove.add(n)
 
             srcPorts = []
             dstPorts = []
-            edgesToRemove = []
+            edgesToRemove = UniqList()
 
             inP = getSinglePort(n.west)
             outP = getSinglePort(n.east)
@@ -51,5 +48,5 @@ def reduceUselessAssignments(root: LNode):
                     root.addEdge(srcPort, dstPort,
                                  originObj=originObj)
 
-    if do_update:
-        root.children = list(nodes)
+    if to_remove:
+        root.children = [n for n in root.children if n not in to_remove]

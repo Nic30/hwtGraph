@@ -6,13 +6,16 @@ from hwt.hdl.statement import HdlStatement
 from hwt.hdl.types.array import HArray
 from hwt.hdl.types.bits import Bits
 from hwt.pyUtils.arrayQuery import arr_all
+from hwt.pyUtils.uniqList import UniqList
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
+from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
+from hwt.serializer.utils import RtlSignal_sort_key
 
 
-def indexedAssignmentsToConcatenation(netlist):
+def indexedAssignmentsToConcatenation(netlist: RtlNetlist):
     signalsToReduce = set()
 
-    for s in netlist.signals:
+    for s in sorted(netlist.signals, key=RtlSignal_sort_key):
         if len(s.drivers) > 1 and isinstance(s._dtype, Bits):
             compatible = True
             for d in s.drivers:
@@ -25,8 +28,9 @@ def indexedAssignmentsToConcatenation(netlist):
             if compatible:
                 signalsToReduce.add(s)
 
-    for s in signalsToReduce:
+    for s in sorted(signalsToReduce, key=RtlSignal_sort_key):
         inputs = []
+        # list() because a collection may change during the iteration
         for d in list(s.drivers):
             i = d.indexes[0].staticEval().to_py()
             if isinstance(i, int):
@@ -40,7 +44,10 @@ def indexedAssignmentsToConcatenation(netlist):
 
 
 def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
-    openset = set([s for s in netlist.signals if not s.hidden])
+    openset = UniqList(sorted(
+        (s for s in netlist.signals if not s.hidden),
+        key=RtlSignal_sort_key
+    ))
     epsToReplace = []
     while openset:
         s = openset.pop()
@@ -77,5 +84,5 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
             # and instantiate Assignment to this new signal from the
             # old one
             r(new_r)
-            openset.add(r)
+            openset.append(r)
         epsToReplace.clear()

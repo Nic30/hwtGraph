@@ -18,9 +18,13 @@ from hwtGraph.elk.containers.lEdge import LEdge
 from hwtGraph.elk.containers.lNode import LayoutExternalPort, LNode
 from hwtGraph.elk.containers.lPort import LPort
 from ipCorePackager.constants import DIRECTION
+from hwt.serializer.utils import getMaxStmIdForStm
 
 
 class NetCtxs(dict):
+    """
+    Dictionary of NetCtx instances
+    """
 
     def __init__(self, parentNode):
         dict.__init__(self)
@@ -28,7 +32,7 @@ class NetCtxs(dict):
 
     def applyConnections(self, root):
         seen = set()
-        for sig, net in self.items():
+        for sig, net in sorted(self.items(), key=lambda x: x[1].seqNo):
             if net in seen:
                 continue
             seen.add(net)
@@ -90,25 +94,30 @@ class NetCtxs(dict):
         try:
             return self[k], True
         except KeyError:
-            v = self[k] = NetCtx(self, k)
+            v = self[k] = NetCtx(self, k, len(self))
             return v, False
 
 
 class NetCtx():
 
-    def __init__(self, others: NetCtxs, actualKey):
+    def __init__(self, others: NetCtxs, actualKey, seqNo: int):
+        """
+        :param seqNo: sequential number used to sustain determinism while iterating over instances of this class in dictionary
+
+        """
         self.parentNode = others.parentNode
         assert isinstance(self.parentNode, LNode), self.parentNode
         self.actualKeys = [actualKey, ]
         self.others = others
         self.drivers = UniqList()
         self.endpoints = UniqList()
+        self.seqNo = seqNo
 
     def extend(self, other):
         self.drivers.extend(other.drivers)
         self.endpoints.extend(other.endpoints)
 
-    def addDriver(self, src):
+    def addDriver(self, src: Union[RtlSignalBase, LPort]):
         if isinstance(src, RtlSignalBase):
             return self.others.joinNetsByKeyVal(src, self)
         else:
@@ -122,10 +131,10 @@ class NetCtx():
                 # source is child output port
                 assert self.parentNode is src.parentNode.parent, src
                 assert src.direction == PortType.OUTPUT, src
+
             return self.drivers.append(src)
 
-    def addEndpoint(self, dst):
-        # print("add e", self.actualKeys, ep)
+    def addEndpoint(self, dst: Union[RtlSignalBase, LPort]):
         if isinstance(dst, RtlSignalBase):
             return self.others.joinNetsByValKey(self, dst)
         else:
@@ -139,6 +148,7 @@ class NetCtx():
                 # target is child input port
                 assert self.parentNode is dst.parentNode.parent, dst
                 assert dst.direction == PortType.INPUT, dst
+
             return self.endpoints.append(dst)
 
 
@@ -194,8 +204,7 @@ def _addPort(n: LNode, lp: LPort, intf: Interface,
     if reverseDirection:
         d = PortType.opposite(d)
 
-    new_lp = LPort(lp, d, lp.side, name=intf._name)
-    new_lp.originObj = origin
+    new_lp = LPort(lp, d, lp.side, name=intf._name, originObj=origin)
     if intf._interfaces:
         for child_intf in intf._interfaces:
             _addPort(n, new_lp, child_intf,
@@ -238,8 +247,9 @@ def addPort(n: LNode, intf: Interface):
 
     d = PortTypeFromDir(d)
     ext_p = LayoutExternalPort(
-        n, name=intf._name, direction=d, node2lnode=n._node2lnode)
-    ext_p.originObj = originObjOfPort(intf)
+        n, name=intf._name, direction=d,
+        node2lnode=n._node2lnode,
+        originObj=originObjOfPort(intf))
     n.children.append(ext_p)
     addPortToLNode(ext_p, intf, reverseDirection=True)
     return ext_p
@@ -308,3 +318,5 @@ def ValueAsLNode(root: LNode, val: HValue):
                      portConstraint=PortConstraints.FREE)
     u.addPort(None, PortType.OUTPUT, PortSide.EAST)
     return u
+
+

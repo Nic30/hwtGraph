@@ -7,13 +7,9 @@ from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.statementRenderer import StatementRenderer
 from hwtGraph.elk.fromHwt.statementRendererUtils import addStmAsLNode, VirtualLNode
-from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, NetCtxs,\
+from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, NetCtxs, \
     originObjOfPort
-
-
-def sortStatementPorts(root):
-    # [TODO]
-    pass
+from hwt.serializer.utils import HdlStatement_sort_key, RtlSignal_sort_key
 
 
 def UnitToLNode(u: Unit, node: Optional[LNode]=None,
@@ -31,9 +27,12 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
         # this component does not have body generated and uses a different
         # component
         shared_comp, _, _ = u._shared_component_with
+        
+        # copy ports
         shared_node = toL[shared_comp]
         for intf in u._interfaces:
             addPortToLNode(node, intf)
+        
         node._shared_component_with = shared_node
         return
 
@@ -53,15 +52,22 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
         UnitToLNode(su, n, toL, optimizations)
 
     # create subunits from statements
-    for stm in u._ctx.statements:
-        n = addStmAsLNode(root, stm, stmPorts, netCtx)
+    statements = sorted(u._ctx.statements, key=HdlStatement_sort_key)
+    for stm in statements:
+        addStmAsLNode(root, stm, stmPorts, netCtx)
 
     # create ports for this unit
     for intf in u._interfaces:
         addPort(root, intf)
 
+    #k0 = HdlStatement_sort_key(statements[0])[1]
     # render content of statements
-    for stm in u._ctx.statements:
+    for stm in statements:
+        #k = HdlStatement_sort_key(stm)
+        #k = (k[0], k[1] - k0)
+        #print(k)
+        #print([HdlStatement_sort_key(_k)[1] - k0 for _k in stm._iter_stms()])
+        #print(stm)
         n = toL.get(stm, None)
         if n is not None:
             if isinstance(n, VirtualLNode):
@@ -76,7 +82,8 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
             r.renderContent()
 
     # connect nets inside this unit
-    for s in sorted(u._ctx.signals, key=lambda x: (x.name, x._instId)):
+    #print(list(x.name for x in sorted(u._ctx.signals, key=RtlSignal_sort_key)))
+    for s in sorted(u._ctx.signals, key=RtlSignal_sort_key):
         if not s.hidden:
             net, _ = netCtx.getDefault(s)
             for e in s.endpoints:
