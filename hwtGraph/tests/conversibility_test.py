@@ -52,9 +52,9 @@ def convert(u):
     g = UnitToLNode(u, optimizations=DEFAULT_LAYOUT_OPTIMIZATIONS)
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
-    import json
-    with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
-        json.dump(data, fp, indent=2, sort_keys=True)
+    # import json
+    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+    #     json.dump(data, fp, indent=2, sort_keys=True)
     # from pprint import pprint
     # pprint(data)
     return g, data
