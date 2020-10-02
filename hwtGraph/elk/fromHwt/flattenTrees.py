@@ -111,8 +111,14 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
             for i, (iN, iP, iE) in enumerate(inputEdges):
                 name = None
                 index = len(inputEdges) - i - 1
-                if hasattr(iE.originObj, "_dtype"):
-                    w = iE.originObj._dtype.bit_length()
+                origin_sig = iE.originObj
+                if type(origin_sig) is tuple:
+                    for _origin_sig in origin_sig:
+                        if hasattr(_origin_sig, "_dtype"):
+                            origin_sig = _origin_sig
+
+                if hasattr(origin_sig, "_dtype"):
+                    w = origin_sig._dtype.bit_length()
                     if w > 1:
                         name = "[%d:%d]" % (w + bit_offset, bit_offset)
                     else:
@@ -120,7 +126,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
                     bit_offset += w
 
                 if name is None:
-                    assert bit_offset == 0, "can not mix implicitly indexed and bit indexed array items"
+                    assert bit_offset == 0, ("can not mix implicitly indexed and bit indexed array items", inputEdges)
                     name = "[%d]" % (index)
                 port_names.append(name)
 
