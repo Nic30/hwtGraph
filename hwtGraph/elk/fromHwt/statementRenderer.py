@@ -14,10 +14,11 @@ from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
+from hwtGraph.elk.fromHwt.netCtx import NetCtx, NetCtxs
 from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
-    isUselessTernary, isUselessEq, NetCtxs, NetCtx
+    isUselessTernary, isUselessEq
 
 
 FF = "FF"
@@ -325,7 +326,7 @@ class StatementRenderer():
         else:
             return None, assig.src
 
-    def getInputNetCtx(self, signal: RtlSignalBase):
+    def getInputNetCtx(self, signal: RtlSignalBase) -> NetCtx:
         netCtxs = self.netCtxs
         if signal.hidden:
             # later connect driver of this signal to output port
@@ -365,11 +366,13 @@ class StatementRenderer():
             driver = signal.drivers[0]
             if isinstance(driver, Operator):
                 d = self.addOperatorAsLNode(driver)
+
                 if isinstance(d, LNode):
                     c, _ = self.netCtxs.getDefault(signal)
                     c.addDriver(d.east[0])
                 else:
                     self.netCtxs.joinNetsByKeyVal(signal, d)
+
         elif d_cnt == 0 and signal.def_val._isFullVld():
             raise AssertionError("Value of this net should have been already rendered")
         else:
@@ -377,14 +380,13 @@ class StatementRenderer():
 
     def addOperatorAsLNode(self, op: Operator) -> Union[LNode, NetCtx]:
         root = self.node
-        if isUselessTernary(op):
+        if isUselessTernary(op) or isUselessEq(op):
             # is in format 1 if cond else 0
             # return NetCtx of cond directly
-            cond = op.operands[0]
-            return self.getInputNetCtx(cond)
-        elif isUselessEq(op):
             s = op.operands[0]
-            return self.getInputNetCtx(s)
+            net_ctx = self.getInputNetCtx(s)
+            #self.netCtxs.joinNetsByValKey(net_ctx, op.result)
+            return net_ctx
 
         if op.operator == AllOps.INDEX:
             inputNames = ["in", "index"]

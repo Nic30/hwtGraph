@@ -6,7 +6,8 @@ from hwt.hdl.statement import HdlStatement
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
-from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr, NetCtxs
+from hwtGraph.elk.fromHwt.netCtx import NetCtxs
+from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr
 
 
 def walkStatementsForSig(statements: List[HdlStatement], s: RtlSignalBase):

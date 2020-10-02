@@ -2,14 +2,14 @@ from typing import Optional
 
 from hwt.hdl.constants import INTF_DIRECTION
 from hwt.hdl.portItem import HdlPortItem
+from hwt.serializer.utils import HdlStatement_sort_key, RtlSignal_sort_key
 from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
+from hwtGraph.elk.fromHwt.netCtx import NetCtxs
 from hwtGraph.elk.fromHwt.statementRenderer import StatementRenderer
 from hwtGraph.elk.fromHwt.statementRendererUtils import addStmAsLNode, VirtualLNode
-from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, NetCtxs, \
-    originObjOfPort
-from hwt.serializer.utils import HdlStatement_sort_key, RtlSignal_sort_key
+from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, originObjOfPort
 
 
 def UnitToLNode(u: Unit, node: Optional[LNode]=None,
