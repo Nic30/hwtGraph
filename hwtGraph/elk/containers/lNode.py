@@ -166,7 +166,6 @@ class LNode():
     def toElkJson(self, idStore: "ElkIdStore", path_prefix: ComponentPath = ComponentPath(), isTop=True):
         props = {
             "org.eclipse.elk.portConstraints": self.portConstraints.name,
-            'org.eclipse.elk.randomSeed': 0,
             'org.eclipse.elk.layered.mergeEdges': 1,
         }
         hw_meta = {
