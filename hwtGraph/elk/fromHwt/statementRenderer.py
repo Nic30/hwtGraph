@@ -56,7 +56,7 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
             yield from detectRamPorts(_stm, _stm.cond & current_en)
         elif isinstance(_stm, Assignment):
             if isinstance(_stm.dst._dtype, HArray):
-                assert len(_stm.indexes) == 1, "one address per RAM port"
+                assert len(_stm.indexes) == 1, ("expects only a single address per RAM port", _stm)
                 w_addr = _stm.indexes[0]
                 mem = _stm.dst
                 yield (RAM_WRITE, mem, w_addr, current_en, _stm.src)
