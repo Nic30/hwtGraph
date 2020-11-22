@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import List
+from typing import List, Generator
 
 from hwt.synthesizer.componentPath import ComponentPath
 from hwtGraph.elk.containers.constants import PortSide, PortType
@@ -42,19 +42,6 @@ class LPort():
         self.side = side
         self.index = None
 
-    def getLevel(self):
-        """
-        Get nest-level of this port
-        """
-        lvl = 0
-        p = self
-        while True:
-            p = p.parent
-            if not isinstance(p, LPort):
-                break
-            lvl += 1
-        return lvl
-
     def iterEdges(self, filterSelfLoops=False):
         assert isinstance(self.incomingEdges, list)
         assert isinstance(self.outgoingEdges, list)
@@ -95,12 +82,17 @@ class LPort():
         return {
             "id": str(idStore[path_prefix / self]),
             "hwMeta": {
-                "level": self.getLevel(),
                 "name": self.name,
             },
             "direction": self.direction.name,
             "properties": props,
+            "children": [p.toElkJson(idStore, path_prefix) for p in self.children] if self.children else None
         }
+
+    def iterPorts(self) -> Generator["LPort", None, None]:
+        yield self
+        for c in self.children:
+            yield from c.iterPorts()
 
     def __repr__(self):
         return "<{0} {1} {2:#018x} {3}>".format(

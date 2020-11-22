@@ -1,6 +1,5 @@
 from hwt.synthesizer.dummyPlatform import DummyPlatform
 from hwtGraph.elk.fromHwt.extractSplits import extractSplits
-from hwtGraph.elk.fromHwt.flattenPorts import flattenPorts
 from hwtGraph.elk.fromHwt.flattenTrees import flattenTrees
 from hwtGraph.elk.fromHwt.mergeSplitsOnInterfaces import mergeSplitsOnInterfaces
 from hwtGraph.elk.fromHwt.netlistPreprocessors import indexedAssignmentsToConcatenation, \
@@ -25,6 +24,4 @@ DEFAULT_LAYOUT_OPTIMIZATIONS = [
     resolveSharedConnections,
     # prettyfications
     sortStatementPorts,
-    # required for to json conversion
-    flattenPorts,
 ]

@@ -51,8 +51,10 @@ class LNode():
         self._node2lnode = node2lnode
 
     def iterPorts(self) -> Generator[LPort, None, None]:
-        return chain(self.north, self.east,
-                     reversed(self.south), reversed(self.west))
+        for p in chain(self.north, self.east):
+            yield from p.iterPorts()
+        for p in chain(reversed(self.south), reversed(self.west)):
+            yield from reversed(list(p.iterPorts()))
 
     def getPortSideView(self, side) -> List["LPort"]:
         """
