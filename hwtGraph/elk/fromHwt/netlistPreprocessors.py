@@ -68,15 +68,7 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
             assert len(r.drivers) == 1, r
             r.hidden = False
             i = ep.operands[1]
-            # update operator cache of signal
-            k = (AllOps.INDEX, i)
-            _r = s._usedOps.pop(k)
-            assert r is _r
-            for o in ep.operands:
-                if isinstance(o, RtlSignalBase):
-                    o.endpoints.discard(ep)
-            r.origin = None
-            r.drivers.clear()
+            ep._destroy()
 
             # instantiate new hidden signal for result of index
             new_r = s[i]
@@ -85,4 +77,5 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
             # old one
             r(new_r)
             openset.append(r)
+
         epsToReplace.clear()
