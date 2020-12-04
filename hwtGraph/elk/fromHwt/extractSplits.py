@@ -47,7 +47,7 @@ def extractSplits(root: LNode):
                             continue
                         sliceParts.append((sliceRange, ep))
 
-            if sliceParts: 
+            if sliceParts:
                 # reduce to slice
                 sliceParts.sort(key=lambda x: x[0].start)
                 n = toL[sliceParts[0][1]]
