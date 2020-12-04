@@ -13,6 +13,7 @@ from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
 from hwtLib.amba.axi4Lite import Axi4Lite
 from hwtLib.amba.axiLite_comp.to_axi import AxiLite_to_Axi
 from hwtLib.amba.axi_comp.buff import AxiBuff
+from hwtLib.amba.axi_comp.oooOp.examples.counterHashTable import OooOpExampleCounterHashTable
 from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
 from hwtLib.amba.axi_comp.tester import AxiTester
 from hwtLib.amba.axis_fullduplex import AxiStreamFullDuplex
@@ -80,7 +81,7 @@ def assert_Unit_lexical_eq(u0: Unit, u1: Unit):
         for c_u0, c_u1 in zip(u0._units, u1._units):
             assert c_u0._name == c_u1._name
             assert_Unit_lexical_eq(c_u0, c_u1)
-        
+
 
 class DirectFF_sig(Unit):
 
@@ -187,6 +188,10 @@ class Conversibility_TC(unittest.TestCase):
 
     def test_CuckooHashTable(self):
         u = CuckooHashTable()
+        convert(u)
+
+    def test_OooOpExampleCounterHashTable(self):
+        u = OooOpExampleCounterHashTable()
         convert(u)
 
     def test_GrayCntr(self):
@@ -321,17 +326,17 @@ class Conversibility_TC(unittest.TestCase):
                 u1 = comp(*args)
             else:
                 u0 = comp()
-                u1 = comp()                
+                u1 = comp()
             d0 = convert(u0)[1]
             d1 = convert(u1)[1]
             assert_Unit_lexical_eq(u0, u1)
             self.assertDictEqual(d0, d1, comp.__name__)
-        
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    
-    # suite.addTest(Conversibility_TC('test_output_is_deterministc'))
+
+    # suite.addTest(Conversibility_TC('test_OooOpExampleCounterHashTable'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
