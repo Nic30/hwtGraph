@@ -25,16 +25,6 @@ class PortType(Enum):
     INPUT = 1
     OUTPUT = 2
 
-    def toStr(self, v):
-        if v == self.UNDEFINED:
-            return "UNDEFINED"
-        elif v == self.INPUT:
-            return "INPUT"
-        elif v == self.OUTPUT:
-            return "OUTPUT"
-        else:
-            raise ValueError(v)
-
     @classmethod
     def opposite(cls, t):
         if t == cls.INPUT:
