@@ -19,6 +19,7 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq
+from hwt.hdl.types.sliceVal import SliceVal
 
 
 FF = "FF"
@@ -261,6 +262,16 @@ class StatementRenderer():
 
         return n, oPort
 
+    def _format_const_index(self, i):
+        if isinstance(i, SliceVal):
+            i = i.val
+        if isinstance(i, slice):
+            if int(i.step) != -1:
+                raise NotImplementedError(i.step)
+            return  "[%d:%d]" % (int(i.start), int(i.stop))
+        else:
+            return "[%d]" % int(i)
+
     def createAssignment(self, assig: Assignment, connectOut: bool):
         pctx = self.portCtx
         src = assig.src
@@ -295,12 +306,12 @@ class StatementRenderer():
             else:
                 for i in assig.indexes:
                     assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
-                body_text = "".join(["[%d]" % int(i) for i in assig.indexes])
+                body_text = "".join([self._format_const_index(i) for i in assig.indexes])
                 n = self.node.addNode(ITEM_SET, cls="Operator", bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
                                            assig.dst if connectOut else None,
-                                           oriObj=assig.dst)
+                                           origObj=assig.dst)
                 return n, oPort
 
         elif connectOut:
@@ -513,7 +524,7 @@ class StatementRenderer():
             if not stm:
                 return None
             elif len(stm) != 1:
-                raise NotImplementedError("deduced MUX")
+                raise NotImplementedError("deduced MUX", stm)
             else:
                 stm = stm[0]
 
