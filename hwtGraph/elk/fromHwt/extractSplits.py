@@ -82,7 +82,6 @@ def extractSplits(root: LNode):
                         for _dst in e.dsts:
                             dstPorts.append((_dst, e.originObj))
                         e.remove()
-
                     root.children.remove(oldAssigNode)
                     # remove index value node (we know that it is constant,
                     # from original select)
