@@ -66,9 +66,9 @@ def extractSplits(root: LNode):
                 # create new sliceNode
                 for sliceRange, assig in sliceParts:
                     if sliceRange.start - sliceRange.stop == 1:
-                        name = "[%d]" % sliceRange.stop
+                        name = f"[{sliceRange.stop:d}]"
                     else:
-                        name = "[%d:%d]" % (sliceRange.start, sliceRange.stop)
+                        name = f"[{sliceRange.start:d}:{sliceRange.stop:d}]"
                     outPort = sliceNode.addPort(
                         name, PortType.OUTPUT, PortSide.EAST)
                     oldAssigNode = toL[assig]

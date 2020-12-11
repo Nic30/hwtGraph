@@ -213,7 +213,7 @@ def mergeSplitsOnInterfaces(root: LNode):
                            len(n.east))):
             copyPort(
                 srcPort, newSplitNode,
-                False, "[%d]" % i)
+                False, f"[{i:d}]")
 
         reconnectPorts(root, srcPort, splitsAndConcats,
                        newSplitNode)

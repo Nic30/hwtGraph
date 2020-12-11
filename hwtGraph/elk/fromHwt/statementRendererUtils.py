@@ -71,7 +71,7 @@ class VirtualLNode():
         self.addEdge = parent.addEdge
 
     def __repr__(self):
-        return "<VirtualLNode for %r>" % self.originObj
+        return f"<VirtualLNode for {self.originOb}>"
 
 
 def addStmAsLNode(root: LNode, stm: HdlStatement,

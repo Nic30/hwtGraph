@@ -20,7 +20,7 @@ class LEdge():
         self.parentNode = parentNode
         if name is not None:
             assert isinstance(name, str)
-        
+
         self.name = name
         self.originObj = originObj
 
@@ -115,5 +115,4 @@ class LEdge():
         return d
 
     def __repr__(self):
-        return "<%s, %r -> %r>" % (
-            self.__class__.__name__, self.srcs, self.dsts)
+        return f"<{self.__class__.__name__:s}, {self.srcs} -> {self.dsts}>"

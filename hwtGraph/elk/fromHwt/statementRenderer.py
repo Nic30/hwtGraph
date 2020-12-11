@@ -409,7 +409,7 @@ class StatementRenderer():
                 if w > 1:
                     name = "[%d:%d]" % (w + bit_offset, bit_offset)
                 else:
-                    name = "[%d]" % bit_offset
+                    name = f"[{bit_offset:d}]"
                 inputNames.append(name)
                 bit_offset += w
         else:

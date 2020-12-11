@@ -6,10 +6,10 @@ from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
 
 
-def merge_non_reduced_ports(port: LPort, reduced_ports: List[LPort]):    
+def merge_non_reduced_ports(port: LPort, reduced_ports: List[LPort]):
     for ch0 in reduced_ports:
         for ch1 in ch0.children:
-            ch1.name = "%s.%s" % (ch1.parent.name, ch1.name)
+            ch1.name = f"{ch1.parent.name:s}.{ch1.name:s}"
             ch1.parent = port
             port.children.append(ch1)
 
@@ -92,7 +92,7 @@ def portTryReduce(root: LNode, port: LPort):
     # from main port connection we have to add them
     merge_non_reduced_ports(port, children_to_destroy)
     merge_non_reduced_ports(new_target, on_target_children_to_destroy)
-    
+
     # connect this port to new target as it was connected by children before
     # [TODO] names for new edges
     if port.direction == PortType.OUTPUT:

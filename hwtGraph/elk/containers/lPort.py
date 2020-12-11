@@ -76,7 +76,7 @@ class LPort():
             if name is None:
                 if isinstance(p, LPort) and p.parent is not None:
                     index = p.parent.getPortSideView(p.side).index(p)
-                    name = "[%d]" % (index)
+                    name = f"[{index:d}]"
                 else:
                     name = "<Unnamed>"
             names.append(name)

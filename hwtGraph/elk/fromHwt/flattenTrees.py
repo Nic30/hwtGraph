@@ -122,12 +122,12 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
                     if w > 1:
                         name = "[%d:%d]" % (w + bit_offset, bit_offset)
                     else:
-                        name = "[%d]" % bit_offset
+                        name = f"[{bit_offset:d}]"
                     bit_offset += w
 
                 if name is None:
                     assert bit_offset == 0, ("can not mix implicitly indexed and bit indexed array items", inputEdges)
-                    name = "[%d]" % (index)
+                    name = f"[{index:d}]"
                 port_names.append(name)
 
             for name, (_, iP, iE) in zip(port_names, inputEdges):
