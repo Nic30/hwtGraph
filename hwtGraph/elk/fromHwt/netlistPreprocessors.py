@@ -11,37 +11,6 @@ from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
 from hwt.serializer.utils import RtlSignal_sort_key
 
 
-def indexedAssignmentsToConcatenation(netlist: RtlNetlist):
-    signalsToReduce = set()
-
-    for s in sorted(netlist.signals, key=RtlSignal_sort_key):
-        if len(s.drivers) > 1 and isinstance(s._dtype, Bits):
-            compatible = True
-            for d in s.drivers:
-                if not isinstance(d, Assignment)\
-                        or len(d.indexes) != 1\
-                        or not isConst(d.indexes[0]):
-                    compatible = False
-                    break
-
-            if compatible:
-                signalsToReduce.add(s)
-
-    for s in sorted(signalsToReduce, key=RtlSignal_sort_key):
-        inputs = []
-        # list() because a collection may change during the iteration
-        for d in list(s.drivers):
-            i = d.indexes[0].staticEval().to_py()
-            if isinstance(i, int):
-                i = slice(i + 1, i)
-            v = d.src
-            inputs.append((i, v))
-            d._destroy()
-
-        inputs.sort(key=lambda x: x[0].stop)
-        s(Concat(*[x[1] for x in inputs]))
-
-
 def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
     openset = UniqList(sorted(
         (s for s in netlist.signals if not s.hidden),
