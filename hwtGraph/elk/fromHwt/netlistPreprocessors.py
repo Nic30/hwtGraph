@@ -7,7 +7,6 @@ from hwt.hdl.types.array import HArray
 from hwt.hdl.types.bits import Bits
 from hwt.pyUtils.arrayQuery import arr_all
 from hwt.pyUtils.uniqList import UniqList
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
 from hwt.serializer.utils import RtlSignal_sort_key
 
