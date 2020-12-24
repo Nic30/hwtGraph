@@ -24,7 +24,7 @@ class NetCtxs(dict):
             seen.add(net)
 
             if net.endpoints:
-                assert net.drivers
+                assert net.drivers, net
 
             if not net.endpoints:
                 # unconnected input or constant which was replaced by value
