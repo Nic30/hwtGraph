@@ -22,6 +22,7 @@ from hwtLib.amba.datapump.r import Axi_rDatapump
 from hwtLib.amba.datapump.w import Axi_wDatapump
 from hwtLib.clocking.cdc import Cdc
 from hwtLib.clocking.clkDivider import ClkDiv3
+from hwtLib.common_nonstd_interfaces.addr_data_hs_to_Axi import example_AddrDataHs_to_Axi
 from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
 from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.examples.mem.ram import SimpleAsyncRam
@@ -279,6 +280,10 @@ class Conversibility_TC(unittest.TestCase):
         u = AxiStreamFullDuplex_wire_nested()
         convert(u)
 
+    def test_AddrDataHs_to_Axi(self):
+        u = example_AddrDataHs_to_Axi()
+        convert(u)
+
     def test_output_is_deterministc(self):
         components = [
             DirectFF_sig,
@@ -318,6 +323,7 @@ class Conversibility_TC(unittest.TestCase):
             ArrayBuff_writer,
             ArrayItemGetter,
             MMU_2pageLvl,
+            example_AddrDataHs_to_Axi,
         ]
         for comp in components:
             if isinstance(comp, tuple):
@@ -336,7 +342,7 @@ class Conversibility_TC(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
 
-    # suite.addTest(Conversibility_TC('test_OooOpExampleCounterHashTable'))
+    # suite.addTest(Conversibility_TC('test_AddrDataHs_to_Axi'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
