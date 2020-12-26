@@ -16,7 +16,7 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
                 toL: Optional[dict]=None,
                 optimizations=[]) -> LNode:
     """
-    Build LNode instance (a graph) from Unit instance (a RTL graph)
+    Build LNode instance (a graph) from :class:`hwt.synthesizer.unit.Unit` instance (a RTL graph)
 
     :attention: unit has to be synthesized
     """
@@ -27,12 +27,12 @@ def UnitToLNode(u: Unit, node: Optional[LNode]=None,
         # this component does not have body generated and uses a different
         # component
         shared_comp, _, _ = u._shared_component_with
-        
+
         # copy ports
         shared_node = toL[shared_comp]
         for intf in u._interfaces:
             addPortToLNode(node, intf)
-        
+
         node._shared_component_with = shared_node
         return
 
