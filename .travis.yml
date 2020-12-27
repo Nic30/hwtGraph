@@ -8,7 +8,7 @@ python:
 - '3.8'
 install:
 - cd ..
-- pip install pytest coveralls
+- pip install coveralls
 - git clone --depth=1 https://github.com/Nic30/hwtLib.git
 - cd hwtLib
 - pip install --upgrade  -r doc/requirements.txt
@@ -16,7 +16,7 @@ install:
 - cd ../hwtGraph
 - python setup.py install
 script:
-- coverage run --source=hwtGraph setup.py test
+- coverage run --source=hwtGraph -m tests.all
 deploy:
   provider: pypi
   user: nic30
