@@ -39,5 +39,6 @@ setup(name='hwtGraph',
         "Topic :: Utilities",
       ],
       license='MIT',
-      packages=find_packages(),
-      zip_safe=False)
+      packages=find_packages(exclude=["tests", ]),
+      zip_safe=True
+)
