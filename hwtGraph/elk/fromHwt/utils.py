@@ -3,15 +3,13 @@ from typing import Union, List
 
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.constants import INTF_DIRECTION
-from hwt.hdl.operator import Operator, isConst
+from hwt.hdl.operator import Operator
 from hwt.hdl.operatorDefs import AllOps
 from hwt.hdl.portItem import HdlPortItem
 from hwt.hdl.types.defs import BIT
 from hwt.hdl.value import HValue
-from hwt.pyUtils.uniqList import UniqList
 from hwt.serializer.hwt import HwtSerializer
 from hwt.synthesizer.interface import Interface
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.constants import PortType, PortSide, \
     PortConstraints
