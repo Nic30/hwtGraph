@@ -13,7 +13,11 @@ def merge_non_reduced_ports(port: LPort, reduced_ports: List[LPort]):
             ch1.parent = port
             port.children.append(ch1)
 
-
+# [TODO] We can not just remove sub-ports which have same src/dst as main port
+#        we can reduce the edges, but the sub-port itself has to remain because
+#        we need it for info bout structure of the main port and also
+#        shred components may have differently shared shared sub-port connection
+#        which should result in a different port expansion now the port is just missing
 def portTryReduce(root: LNode, port: LPort):
     """
     Check if majority of children is connected to same port
@@ -88,7 +92,7 @@ def portTryReduce(root: LNode, port: LPort):
     new_target.children = [
         ch for ch in new_target.children if ch not in on_target_children_to_destroy]
 
-    # if the port does hove some sub ports which are an exceptions
+    # if the port does have some sub ports which are an exceptions
     # from main port connection we have to add them
     merge_non_reduced_ports(port, children_to_destroy)
     merge_non_reduced_ports(new_target, on_target_children_to_destroy)
