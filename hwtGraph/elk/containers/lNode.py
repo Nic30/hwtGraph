@@ -1,4 +1,4 @@
-from itertools import chain
+from itertools import chain, zip_longest
 from typing import List, Generator
 
 from hwt.pyUtils.uniqList import UniqList
@@ -153,10 +153,19 @@ class LNode():
                     p.index = i
                 idStore.registerPort(path_prefix / p)
         else:
-            for i, (p, orig_p) in enumerate(zip(self.iterPorts(), c.iterPorts())):
+            for i, (p, orig_p) in enumerate(zip_longest(self.iterPorts(), c.iterPorts(), fillvalue=None)):
+                assert p.name == orig_p.name, (p.name, orig_p.name)
+                assert p is not None, (
+                    "Current component is missing some port",
+                    list(self.iterPorts()), list(c.iterPorts()))
+                assert orig_p is not None, (
+                    "Current component has an extra port",
+                    list(self.iterPorts()), list(c.iterPorts()))
+
                 if addIndex:
                     p.index = i
                 id_ = idStore.registerPort(path_prefix / p)
+                # init also the alias
                 idStore[pp / orig_p] = id_
 
         children, path_prefix = self._getUniqRefChildren(path_prefix)
