@@ -28,7 +28,7 @@ from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.examples.mem.ram import SimpleAsyncRam
 from hwtLib.examples.mem.reg import Latch
 from hwtLib.examples.operators.indexing import IndexingInernJoin, \
-    IndexingInernRangeSplit, IndexingInernSplit
+    IndexingInernRangeSplit, IndexingInternSplit
 from hwtLib.examples.showcase0 import Showcase0
 from hwtLib.examples.simpleAxiStream import SimpleUnitAxiStream
 from hwtLib.examples.statements.constDriver import ConstDriverUnit
@@ -212,9 +212,14 @@ class Conversibility_TC(unittest.TestCase):
         u = IndexingInernRangeSplit()
         convert(u)
 
-    def test_IndexingInernSplit(self):
-        u = IndexingInernSplit()
-        convert(u)
+    def test_IndexingInternSplit(self):
+        u = IndexingInternSplit()
+        g, data = convert(u)
+        join, split = g.children[2:]
+        self.assertEqual(split.name, "SLICE")
+        self.assertEqual(join.name, "CONCAT")
+        self.assertIs(split.east[0].outgoingEdges[0].dsts[0], join.west[0])
+        self.assertIs(split.east[1].outgoingEdges[0].dsts[0], join.west[1])
 
     def test_Latch(self):
         u = Latch()
@@ -309,7 +314,7 @@ class Conversibility_TC(unittest.TestCase):
             Latch,
             IndexingInernJoin,
             IndexingInernRangeSplit,
-            IndexingInernSplit,
+            IndexingInternSplit,
             Showcase0,
             SimpleUnitAxiStream,
             ConstDriverUnit,
@@ -348,7 +353,7 @@ class Conversibility_TC(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
 
-    # suite.addTest(Conversibility_TC('test_AddrDataHs_to_Axi'))
+    # suite.addTest(Conversibility_TC('test_IndexingInternSplit'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
