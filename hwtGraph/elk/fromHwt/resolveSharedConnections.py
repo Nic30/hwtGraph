@@ -4,6 +4,7 @@ from hwt.pyUtils.uniqList import UniqList
 from hwtGraph.elk.containers.constants import PortType
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
+from itertools import chain
 
 
 def merge_non_reduced_ports(port: LPort, reduced_ports: List[LPort]):
@@ -12,6 +13,7 @@ def merge_non_reduced_ports(port: LPort, reduced_ports: List[LPort]):
             ch1.name = f"{ch1.parent.name:s}.{ch1.name:s}"
             ch1.parent = port
             port.children.append(ch1)
+
 
 # [TODO] We can not just remove sub-ports which have same src/dst as main port
 #        we can reduce the edges, but the sub-port itself has to remain because
@@ -61,15 +63,11 @@ def portTryReduce(root: LNode, port: LPort):
             raise NotImplementedError("multiple connected nodes", target_ch)
         target_ch = target_ch[0]
 
-        try:
-            assert target_ch.parent is new_target, (
-                target_ch,
-                target_ch.parent,
-                new_target)
-        except AssertionError:
-            print('Wrong target:\n', edge.src, "\n", edge.dst,
-                  "\n", target_ch.parent, "\n", new_target)
-            raise
+        assert target_ch.parent is new_target, (
+            target_ch,
+            target_ch.parent,
+            new_target, 'Wrong target:\n', edge.src, "\n", edge.dst,
+            "\n", target_ch.parent, "\n", new_target)
 
         if child.direction == PortType.OUTPUT:
             edge.removeTarget(target_ch)
@@ -86,16 +84,19 @@ def portTryReduce(root: LNode, port: LPort):
         if not child.incomingEdges and not child.outgoingEdges:
             children_to_destroy.append(child)
 
+    for p in chain(children_to_destroy, on_target_children_to_destroy):
+        p.connectedAsParent = True
+
     # destroy children of new target and this port if possible
-    port.children = [
-        ch for ch in port.children if ch not in children_to_destroy]
-    new_target.children = [
-        ch for ch in new_target.children if ch not in on_target_children_to_destroy]
+    # port.children = [
+    #    ch for ch in port.children if ch not in children_to_destroy]
+    # new_target.children = [
+    #    ch for ch in new_target.children if ch not in on_target_children_to_destroy]
 
     # if the port does have some sub ports which are an exceptions
     # from main port connection we have to add them
-    merge_non_reduced_ports(port, children_to_destroy)
-    merge_non_reduced_ports(new_target, on_target_children_to_destroy)
+    # merge_non_reduced_ports(port, children_to_destroy)
+    # merge_non_reduced_ports(new_target, on_target_children_to_destroy)
 
     # connect this port to new target as it was connected by children before
     # [TODO] names for new edges
@@ -139,7 +140,7 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
     inEdges = port.incomingEdges
     outEdges = port.outgoingEdges
 
-    if port.children:
+    if port.connectedAsParent or (port.children and not all(p.connectedAsParent for p in port.children)):
         ch_cnt = 0
         # try:
         #    assert not inEdges, (port, port.children, inEdges)
@@ -155,7 +156,7 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
         # this port is not connected, just check if it expected state
         if port.direction == PortType.INPUT:
             if port.originObj is not None:
-                assert not port.originObj.src.drivers, port.originObj
+                assert not port.originObj.src.drivers, (port, port.originObj)
             else:
                 print("Warning", port, "not connected")
         return 0

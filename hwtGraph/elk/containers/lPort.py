@@ -16,6 +16,8 @@ class LPort():
     :ivar ~.geometry: absolute geometry in layout
     :ivar ~.children: list of children ports, before interface connecting phase
             (when routing this list is empty and children are directly on parent LNode)
+    :ivar ~.connectedAsParent: it True the port does not contain any explicit connections
+        but is connected as a parent port
     :ivar ~.index: The index of a port in the fixed order around a node.
         The order is assumed as clockwise, starting with the leftmost port on the top side.
         This option must be set if ‘Port Constraints’ is set to FIXED_ORDER
@@ -33,6 +35,7 @@ class LPort():
         else:
             self.parentNode = parent
 
+
         self.name = name
         self.direction = direction
 
@@ -40,6 +43,7 @@ class LPort():
         self.incomingEdges = []
         self.children = []
         self.side = side
+        self.connectedAsParent = False
         self.index = None
 
     def getLevel(self):
@@ -84,6 +88,9 @@ class LPort():
         return list(reversed(names))
 
     def toElkJson(self, idStore, path_prefix: ComponentPath):
+        if self.connectedAsParent:
+            assert isinstance(self.parent, LPort), self
+
         props = {
             "side": self.side.name,
         }
@@ -92,12 +99,18 @@ class LPort():
             assert isinstance(self.index, int), self.index
             props["index"] = self.index
 
+        children = []
+        for c in self.children:
+            children.append(c.toElkJson(idStore, path_prefix))
+
         return {
             "id": str(idStore[path_prefix / self]),
             "hwMeta": {
                 "level": self.getLevel(),
                 "name": self.name,
+                "connectedAsParent": bool(self.connectedAsParent),
             },
+            "children": children,
             "direction": self.direction.name,
             "properties": props,
         }

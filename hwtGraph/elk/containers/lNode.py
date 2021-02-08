@@ -54,6 +54,12 @@ class LNode():
         return chain(self.north, self.east,
                      reversed(self.south), reversed(self.west))
 
+    def iterPortsWithReverseFlag(self) -> Generator[LPort, None, None]:
+        for p in chain(self.north, self.east):
+            yield (False, p)
+        for p in chain(reversed(self.south), reversed(self.west)):
+            yield (True, p)
+
     def getPortSideView(self, side) -> List["LPort"]:
         """
         Returns a sublist view for all ports of given side.
@@ -134,6 +140,49 @@ class LNode():
         for ch in children:
             ch.toElkJson_registerNodes(idStore, path_prefix)
 
+    def _toElkJson_registerPorts(self, idStore,
+                                 path_prefix: ComponentPath, addIndex: bool, p: LPort,
+                                 i: int, revIndex: bool):
+        if addIndex and not revIndex:
+            p.index = i
+            i += 1
+        idStore.registerPort(path_prefix / p)
+        for c in p.children:
+            i = self._toElkJson_registerPorts(idStore, path_prefix, addIndex, c, i, revIndex)
+
+        if addIndex and revIndex:
+            p.index = i
+            i += 1
+        return i
+
+    def _toElkJson_registerPorts_shared_comp(self, idStore,
+                                             path_prefix: ComponentPath,
+                                             pp: ComponentPath,
+                                             c: "LNode",
+                                             addIndex: bool, p: LPort, orig_p: LPort,
+                                             i: int, revIndex: bool):
+        assert p is not None, (
+            "Current component is missing some port",
+            list(self.iterPorts()), list(c.iterPorts()))
+        assert orig_p is not None, (
+            "Current component has an extra port",
+            list(self.iterPorts()), list(c.iterPorts()))
+        assert p.name == orig_p.name, (p.name, orig_p.name)
+        if addIndex and not revIndex:
+            p.index = i
+            i += 1
+        id_ = idStore.registerPort(path_prefix / p)
+        # init also the alias
+        idStore[pp / orig_p] = id_
+
+        for _c, orig_p in zip_longest(p.children, orig_p.children):
+            i = self._toElkJson_registerPorts_shared_comp(idStore, path_prefix,
+                                                          pp, c, addIndex, _c, orig_p, i, revIndex)
+        if addIndex and revIndex:
+            p.index = i
+            i += 1
+        return i
+
     def toElkJson_registerPorts(self, idStore,
                                 path_prefix: ComponentPath):
         """
@@ -145,34 +194,25 @@ class LNode():
         """
         addIndex = self.portConstraints == PortConstraints.FIXED_ORDER
         c = self._shared_component_with
-        pp = path_prefix / self
 
+        i = 0
         if c is None:
-            for i, p in enumerate(self.iterPorts()):
-                if addIndex:
-                    p.index = i
-                idStore.registerPort(path_prefix / p)
+            for revIndex, p in self.iterPortsWithReverseFlag():
+                i = self._toElkJson_registerPorts(idStore, path_prefix, addIndex, p, i, revIndex)
         else:
-            for i, (p, orig_p) in enumerate(zip_longest(self.iterPorts(), c.iterPorts(), fillvalue=None)):
-                assert p.name == orig_p.name, (p.name, orig_p.name)
-                assert p is not None, (
-                    "Current component is missing some port",
-                    list(self.iterPorts()), list(c.iterPorts()))
-                assert orig_p is not None, (
-                    "Current component has an extra port",
-                    list(self.iterPorts()), list(c.iterPorts()))
-
-                if addIndex:
-                    p.index = i
-                id_ = idStore.registerPort(path_prefix / p)
-                # init also the alias
-                idStore[pp / orig_p] = id_
+            pp = path_prefix / self
+            for (revIndex, p), (origRevIndex, orig_p) in zip_longest(self.iterPortsWithReverseFlag(),
+                                                                     c.iterPortsWithReverseFlag(),
+                                                                     fillvalue=None):
+                assert revIndex == origRevIndex, (p, orig_p, "the ports needs to be on same side of component")
+                i = self._toElkJson_registerPorts_shared_comp(idStore, path_prefix,
+                                                              pp, c, addIndex, p, orig_p, i, revIndex)
 
         children, path_prefix = self._getUniqRefChildren(path_prefix)
         for ch in children:
             ch.toElkJson_registerPorts(idStore, path_prefix)
 
-    def toElkJson(self, idStore: "ElkIdStore", path_prefix: ComponentPath = ComponentPath(), isTop=True):
+    def toElkJson(self, idStore: "ElkIdStore", path_prefix: ComponentPath=ComponentPath(), isTop=True):
         props = {
             "org.eclipse.elk.portConstraints": self.portConstraints.name,
             'org.eclipse.elk.layered.mergeEdges': 1,
