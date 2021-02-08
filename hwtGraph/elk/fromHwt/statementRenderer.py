@@ -399,12 +399,15 @@ class StatementRenderer():
             #self.netCtxs.joinNetsByValKey(net_ctx, op.result)
             return net_ctx
 
+        ops = op.operands
         if op.operator == AllOps.INDEX:
             inputNames = ["in", "index"]
         elif op.operator == AllOps.CONCAT:
             inputNames = []
             bit_offset = 0
-            for o in op.operands:
+            # reversed because of little endian
+            ops = tuple(reversed(op.operands))
+            for o in ops:
                 w = o._dtype.bit_length()
                 if w > 1:
                     name = "[%d:%d]" % (w + bit_offset, bit_offset)
@@ -418,7 +421,7 @@ class StatementRenderer():
         u = root.addNode(originObj=op, name=op.operator.id, cls="Operator")
         u.addPort(None, PortType.OUTPUT, PortSide.EAST)
 
-        for inpName, _op in zip(inputNames, op.operands):
+        for inpName, _op in zip(inputNames, ops):
             self.addInputPort(u, inpName, _op)
 
         return u

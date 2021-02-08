@@ -65,7 +65,7 @@ def collectNodesInTree(treeRoot: LNode, reducibleChildren: Set[LNode], reducedNo
     return reducedNodes, inputEdges
 
 
-def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
+def flattenTrees(root, nodeSelector: Callable[[LNode], bool], reversePortOrder):
     """
     Walk all nodes and discover trees of nodes (usually operators)
     and reduce them to single node with multiple outputs
@@ -76,7 +76,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
     assert isinstance(root.children, list)
     for ch in root.children:
         if ch.children:
-            flattenTrees(ch, nodeSelector)
+            flattenTrees(ch, nodeSelector, reversePortOrder)
 
     # collect all nodes which can be potentially reduced
     reducibleChildren = UniqList(ch for ch in root.children if nodeSelector(ch))
@@ -91,6 +91,9 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool]):
         treeRoot = searchRootOfTree(reducibleChildren, _treeRoot, removedNodes)
 
         reducedNodes, inputEdges = collectNodesInTree(treeRoot, reducibleChildren, removedNodes)
+        if reversePortOrder:
+            inputEdges = tuple(reversed(inputEdges))
+
         # if tree is big enough for reduction, reduce it to single node
         if len(reducedNodes) > 1:
             newNode = root.addNode(name=reducedNodes[0].name,
