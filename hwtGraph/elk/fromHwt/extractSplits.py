@@ -1,13 +1,81 @@
+from itertools import groupby
+from typing import List, Tuple
+
 from hwt.hdl.assignment import Assignment
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
+from hwt.serializer.utils import RtlSignal_sort_key
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
-from hwt.serializer.utils import RtlSignal_sort_key
 
 
 class InterfaceSplitInfo(tuple):
     pass
+
+
+def extractSplitsAsSingleNode(root: LNode, sliceParts: List[Tuple[slice, Assignment, LNode]], toL: dict):
+        # replace multiple index nodes with a larger slice node
+    sliceParts.sort(key=lambda x: x[0].start)
+    n = toL[sliceParts[0][1]]
+    p = n.west[0]
+    if not p.incomingEdges:
+        # was already replaced
+        return
+
+    srcPorts = p.incomingEdges[0].srcs
+    assert len(srcPorts) == 1
+    srcPort = srcPorts[0]
+
+    dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
+    sliceNode = root.addNode(
+        name="SLICE", cls="Operator",
+        originObj=InterfaceSplitInfo(x[1] for x in sliceParts))
+    inputPort = sliceNode.addPort(
+        "", PortType.INPUT, PortSide.WEST)
+
+    # create new sliceNode
+    for sliceRange, _, oldAssigNode in sliceParts:
+        # create a new port on main slice node which will be used instead of this operator
+        if sliceRange.start - sliceRange.stop == 1:
+            portName = f"[{sliceRange.stop:d}]"
+        else:
+            portName = f"[{sliceRange.start:d}:{sliceRange.stop:d}]"
+        outPort = sliceNode.addPort(
+            portName, PortType.OUTPUT, PortSide.EAST)
+
+        # disconnect and replace the index and assignment node itself
+        assert root is oldAssigNode.parent
+        dstPortsOnInputNet.remove(oldAssigNode.west[0])
+        for e in list(oldAssigNode.west[0].incomingEdges):
+            e.remove()
+
+        dstPorts = []
+        # this assignment of slice is directly in the root
+        for e in list(oldAssigNode.east[0].outgoingEdges):
+            for _dst in e.dsts:
+                dstPorts.append((_dst, e.originObj))
+            e.remove()
+
+        oldAssigNode.parent.children.remove(oldAssigNode)
+        # remove index value node (we know that it is constant,
+        # from original select)
+        _e = oldAssigNode.west[1].incomingEdges[0]
+        _e.removeTarget(oldAssigNode.west[1])
+        assert len(_e.srcs) == 1
+        indexValNodeP = _e.srcs[0]
+        if not _e.dsts:
+            _e.remove()
+
+        if not indexValNodeP.outgoingEdges:
+            root.children.remove(indexValNodeP.parentNode)
+
+        root.addHyperEdge([outPort],
+                          [dst[0] for dst in dstPorts],
+                          originObj=dstPorts[0][1])
+
+    dstPortsOnInputNet.append(inputPort)
+    root.addHyperEdge([srcPort, ], dstPortsOnInputNet,
+                      name=e.name, originObj=e.originObj)
 
 
 def extractSplits(root: LNode):
@@ -45,60 +113,10 @@ def extractSplits(root: LNode):
 
                         if ep not in toL:
                             continue
-                        sliceParts.append((sliceRange, ep))
+                        sliceParts.append((sliceRange, ep, toL[ep]))
 
-            if sliceParts:
-                # reduce to slice
-                sliceParts.sort(key=lambda x: x[0].start)
-                n = toL[sliceParts[0][1]]
-                p = n.west[0]
-                if not p.incomingEdges:
-                    return
-                srcPorts = p.incomingEdges[0].srcs
-                assert len(srcPorts) == 1
-                srcPort = srcPorts[0]
-                dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
-                sliceNode = root.addNode(
-                    name="SLICE", cls="Operator", originObj=InterfaceSplitInfo(x[1] for x in sliceParts))
-                inputPort = sliceNode.addPort(
-                    "", PortType.INPUT, PortSide.WEST)
-
-                # create new sliceNode
-                for sliceRange, assig in sliceParts:
-                    if sliceRange.start - sliceRange.stop == 1:
-                        name = f"[{sliceRange.stop:d}]"
-                    else:
-                        name = f"[{sliceRange.start:d}:{sliceRange.stop:d}]"
-                    outPort = sliceNode.addPort(
-                        name, PortType.OUTPUT, PortSide.EAST)
-                    oldAssigNode = toL[assig]
-                    dstPorts = []
-
-                    dstPortsOnInputNet.remove(oldAssigNode.west[0])
-                    for e in list(oldAssigNode.west[0].incomingEdges):
-                        e.remove()
-
-                    for e in list(oldAssigNode.east[0].outgoingEdges):
-                        for _dst in e.dsts:
-                            dstPorts.append((_dst, e.originObj))
-                        e.remove()
-                    root.children.remove(oldAssigNode)
-                    # remove index value node (we know that it is constant,
-                    # from original select)
-                    _e = oldAssigNode.west[1].incomingEdges[0]
-                    _e.removeTarget(oldAssigNode.west[1])
-                    assert len(_e.srcs) == 1
-                    indexValNodeP = _e.srcs[0]
-                    if not _e.dsts:
-                        _e.remove()
-
-                    if not indexValNodeP.outgoingEdges:
-                        root.children.remove(indexValNodeP.parentNode)
-
-                    root.addHyperEdge([outPort],
-                                      [dst[0] for dst in dstPorts],
-                                      originObj=dstPorts[0][1])
-
-                dstPortsOnInputNet.append(inputPort)
-                root.addHyperEdge([srcPort, ], dstPortsOnInputNet,
-                                  name=e.name, originObj=e.originObj)
+            for _root, _sliceParts in groupby(sliceParts, lambda x: x[2].parent):
+                # the slices may be spoted in some sub node, in that case we need to extract it only in this sub node
+                _sliceParts = list(_sliceParts)
+                if _sliceParts:
+                    extractSplitsAsSingleNode(_root, _sliceParts, toL)

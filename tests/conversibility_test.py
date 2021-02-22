@@ -48,6 +48,7 @@ from hwtLib.peripheral.spi.master import SpiMaster
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
+from hwtLib.examples.arithmetic.multiplierBooth import MultiplierBooth
 
 
 def convert(u):
@@ -294,6 +295,10 @@ class Conversibility_TC(unittest.TestCase):
         u = example_AddrDataHs_to_Axi()
         convert(u)
 
+    def test_MultiplierBooth(self):
+        u = MultiplierBooth()
+        convert(u)
+
     def test_output_is_deterministc(self):
         components = [
             DirectFF_sig,
@@ -335,6 +340,7 @@ class Conversibility_TC(unittest.TestCase):
             ArrayItemGetter,
             MMU_2pageLvl,
             example_AddrDataHs_to_Axi,
+            MultiplierBooth,
         ]
         for comp in components:
             if isinstance(comp, tuple):
@@ -353,7 +359,7 @@ class Conversibility_TC(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
 
-    # suite.addTest(Conversibility_TC('test_IndexingInternSplit'))
+    # suite.addTest(Conversibility_TC('test_MultiplierBooth'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
