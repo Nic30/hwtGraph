@@ -57,7 +57,11 @@ def collectNodesInTree(treeRoot: LNode, reducibleChildren: Set[LNode], reducedNo
             # walk inputs and add child nodes to stack
             for _p in node.west:
                 for _e in _p.iterEdges():
-                    # assert len(e.srcs) == 1 and len(e.dsts) == 1
+                    # must not be internal node of the tree and have connection to outside
+                    # only root and leafs may have connection to somethig outside
+                    if node is not treeRoot and len(_e.srcs) != 1 or len(_e.dsts) != 1:
+                        inputEdges.append((node, _p, _e))
+                        continue
                     nodeStack.append((_e.srcs[0].parentNode, _p, _e))
         else:
             inputEdges.append((node, p, e))
@@ -96,6 +100,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool], reversePortOrder):
 
         # if tree is big enough for reduction, reduce it to single node
         if len(reducedNodes) > 1:
+            assert inputEdges
             newNode = root.addNode(name=reducedNodes[0].name,
                                    cls=reducedNodes[0].cls)
 
@@ -111,7 +116,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool], reversePortOrder):
 
             port_names = []
             bit_offset = 0
-            for i, (iN, iP, iE) in enumerate(inputEdges):
+            for i, (_, iP, iE) in enumerate(inputEdges):
                 name = None
                 index = len(inputEdges) - i - 1
                 origin_sig = iE.originObj
@@ -133,11 +138,21 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool], reversePortOrder):
                     name = f"[{index:d}]"
                 port_names.append(name)
 
+            assert len(port_names) == len(inputEdges)
             for name, (_, iP, iE) in zip(port_names, inputEdges):
                 inp = newNode.addPort(name,
                                       PortType.INPUT, PortSide.WEST)
                 iE.removeTarget(iP)
                 iE.addTarget(inp)
 
+            _reducedNodes = set(reducedNodes)
             for n in reducedNodes:
+                for e in tuple(n.iterEdges()):
+                    #raise AssertionError(n, "should be disconnected")
+                    for s in e.srcs:
+                        assert s.parentNode in _reducedNodes, (n, e, s)
+
+                    for d in e.dsts:
+                        assert d.parentNode in _reducedNodes, (n, e, d)
+                    e.remove()
                 root.children.remove(n)

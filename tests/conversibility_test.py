@@ -49,6 +49,7 @@ from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
 from hwtLib.examples.arithmetic.multiplierBooth import MultiplierBooth
+from hwtLib.amba.axi_comp.cache.tag_array import _example_AxiCacheTagArray
 
 
 def convert(u):
@@ -57,7 +58,8 @@ def convert(u):
     idStore = ElkIdStore()
     data = g.toElkJson(idStore)
     # import json
-    # with open("../../../d3-hwschematic/examples/schemes/" + u._name + ".json", "w") as fp:
+    # import os
+    # with open(os.path.join(os.path.dirname(__file__), "..", "..", "d3-hwschematic/examples/schemes/" + u._name + ".json"), "w") as fp:
     #     json.dump(data, fp, indent=2, sort_keys=True)
     # from pprint import pprint
     # pprint(data)
@@ -299,6 +301,10 @@ class Conversibility_TC(unittest.TestCase):
         u = MultiplierBooth()
         convert(u)
 
+    def test_example_AxiCacheTagArray(self):
+        u = _example_AxiCacheTagArray()
+        convert(u)
+
     def test_output_is_deterministc(self):
         components = [
             DirectFF_sig,
@@ -341,6 +347,7 @@ class Conversibility_TC(unittest.TestCase):
             MMU_2pageLvl,
             example_AddrDataHs_to_Axi,
             MultiplierBooth,
+            _example_AxiCacheTagArray,
         ]
         for comp in components:
             if isinstance(comp, tuple):
@@ -350,6 +357,7 @@ class Conversibility_TC(unittest.TestCase):
             else:
                 u0 = comp()
                 u1 = comp()
+
             d0 = convert(u0)[1]
             d1 = convert(u1)[1]
             assert_Unit_lexical_eq(u0, u1)
@@ -359,7 +367,7 @@ class Conversibility_TC(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
 
-    # suite.addTest(Conversibility_TC('test_MultiplierBooth'))
+    # suite.addTest(Conversibility_TC('test_example_AxiCacheTagArray'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
