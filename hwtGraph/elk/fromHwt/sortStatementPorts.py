@@ -1,6 +1,6 @@
 from typing import List
 
-from hwt.hdl.statement import HdlStatement
+from hwt.hdl.statements.statement import HdlStatement
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
 from hwt.serializer.utils import RtlSignal_sort_key

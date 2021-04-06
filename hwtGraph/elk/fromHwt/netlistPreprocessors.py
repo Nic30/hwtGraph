@@ -1,13 +1,9 @@
-from hwt.code import Concat
-from hwt.hdl.assignment import Assignment
-from hwt.hdl.operator import isConst, Operator
+from hwt.hdl.operator import Operator
 from hwt.hdl.operatorDefs import AllOps
-from hwt.hdl.statement import HdlStatement
+from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.types.array import HArray
-from hwt.hdl.types.bits import Bits
 from hwt.pyUtils.arrayQuery import arr_all
 from hwt.pyUtils.uniqList import UniqList
-from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
 from hwt.serializer.utils import RtlSignal_sort_key
 
 
@@ -41,7 +37,7 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
             # instantiate new hidden signal for result of index
             new_r = s[i]
             assert new_r is not r, r
-            # and instantiate Assignment to this new signal from the
+            # and instantiate HdlAssignmentContainer to this new signal from the
             # old one
             r(new_r)
             openset.append(r)

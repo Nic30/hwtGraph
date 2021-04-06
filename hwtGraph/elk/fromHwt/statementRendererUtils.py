@@ -1,8 +1,8 @@
 from typing import Dict, List
 
-from hwt.hdl.assignment import Assignment
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.operator import isConst
-from hwt.hdl.statement import HdlStatement
+from hwt.hdl.statements.statement import HdlStatement
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
@@ -78,7 +78,7 @@ def addStmAsLNode(root: LNode, stm: HdlStatement,
                   stmPorts: Dict[LNode, Signal2stmPortCtx],
                   netCtx: NetCtxs) -> LNode:
     toL = root._node2lnode
-    isOnlyAssig = isinstance(stm, Assignment)
+    isOnlyAssig = isinstance(stm, HdlAssignmentContainer)
     if isOnlyAssig and not stm.indexes and isConst(stm.src):
         # is only constant
         n = ValueAsLNode(root, stm.src)

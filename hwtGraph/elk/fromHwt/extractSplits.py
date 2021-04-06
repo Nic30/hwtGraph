@@ -1,7 +1,7 @@
 from itertools import groupby
 from typing import List, Tuple
 
-from hwt.hdl.assignment import Assignment
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
 from hwt.serializer.utils import RtlSignal_sort_key
@@ -13,7 +13,7 @@ class InterfaceSplitInfo(tuple):
     pass
 
 
-def extractSplitsAsSingleNode(root: LNode, sliceParts: List[Tuple[slice, Assignment, LNode]], toL: dict):
+def extractSplitsAsSingleNode(root: LNode, sliceParts: List[Tuple[slice, HdlAssignmentContainer, LNode]], toL: dict):
         # replace multiple index nodes with a larger slice node
     sliceParts.sort(key=lambda x: x[0].start)
     n = toL[sliceParts[0][1]]
@@ -97,7 +97,7 @@ def extractSplits(root: LNode):
         if len(s.drivers) == 1 and len(s.endpoints) > 1:
             sliceParts = []
             for ep in s.endpoints:
-                if isinstance(ep, Assignment) and not ep.indexes and ep.src.hidden:
+                if isinstance(ep, HdlAssignmentContainer) and not ep.indexes and ep.src.hidden:
                     op = ep.src.origin
                 else:
                     op = ep

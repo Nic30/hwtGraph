@@ -1,12 +1,12 @@
 from itertools import chain
 from typing import Union, List, Optional, Tuple
 
-from hwt.hdl.assignment import Assignment
-from hwt.hdl.ifContainter import IfContainer
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
+from hwt.hdl.statements.ifContainter import IfContainer
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
-from hwt.hdl.statement import HdlStatement
-from hwt.hdl.switchContainer import SwitchContainer
+from hwt.hdl.statements.statement import HdlStatement
+from hwt.hdl.statements.switchContainer import SwitchContainer
 from hwt.hdl.types.array import HArray
 from hwt.hdl.value import HValue
 from hwt.pyUtils.arrayQuery import arr_any
@@ -55,7 +55,7 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
     for _stm in stm.ifTrue:
         if isinstance(_stm, IfContainer):
             yield from detectRamPorts(_stm, _stm.cond & current_en)
-        elif isinstance(_stm, Assignment):
+        elif isinstance(_stm, HdlAssignmentContainer):
             if isinstance(_stm.dst._dtype, HArray):
                 assert len(_stm.indexes) == 1, ("expects only a single address per RAM port", _stm)
                 w_addr = _stm.indexes[0]
@@ -272,7 +272,7 @@ class StatementRenderer():
         else:
             return "[%d]" % int(i)
 
-    def createAssignment(self, assig: Assignment, connectOut: bool):
+    def createAssignment(self, assig: HdlAssignmentContainer, connectOut: bool):
         pctx = self.portCtx
         src = assig.src
         inputs = [src, ]
@@ -489,7 +489,7 @@ class StatementRenderer():
                 subStm_tmp = subStm_tmp[0]
                 continue
 
-            elif isinstance(subStm_tmp, Assignment):
+            elif isinstance(subStm_tmp, HdlAssignmentContainer):
                 if subStm_tmp.indexes:
                     assig = subStm_tmp
                     break
@@ -532,7 +532,7 @@ class StatementRenderer():
                 stm = stm[0]
 
         # render assignment instances
-        if isinstance(stm, Assignment):
+        if isinstance(stm, HdlAssignmentContainer):
             return self.createAssignment(stm, connectOut)
 
         encl = stm._enclosed_for

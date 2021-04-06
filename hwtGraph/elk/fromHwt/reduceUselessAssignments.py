@@ -1,4 +1,4 @@
-from hwt.hdl.assignment import Assignment
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.pyUtils.uniqList import UniqList
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.lNode import LNode
@@ -15,7 +15,7 @@ def reduceUselessAssignments(root: LNode):
 
     to_remove = set()
     for n in root.children:
-        if isinstance(n.originObj, Assignment)\
+        if isinstance(n.originObj, HdlAssignmentContainer)\
                 and not n.originObj.indexes\
                 and len(n.west) == 1:
             src = n.originObj.src

@@ -1,7 +1,7 @@
 from io import StringIO
 from typing import Union, List
 
-from hwt.hdl.assignment import Assignment
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.constants import INTF_DIRECTION
 from hwt.hdl.operator import Operator
 from hwt.hdl.operatorDefs import AllOps
@@ -154,7 +154,7 @@ def isUselessEq(op: Operator):
 
 
 def ternaryAsSimpleAssignment(root, op):
-    originObj = Assignment(op.operands[0], op.result, virtualOnly=True)
+    originObj = HdlAssignmentContainer(op.operands[0], op.result, virtualOnly=True)
     u = root.addNode(originObj=originObj, name="Assignment", cls="Operator")
     u.addPort("", PortType.OUTPUT, PortSide.EAST)
     u.addPort("", PortType.INPUT, PortSide.WEST)
