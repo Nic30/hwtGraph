@@ -1,13 +1,14 @@
 from itertools import chain
 from typing import Union, List, Optional, Tuple
 
-from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
-from hwt.hdl.statements.ifContainter import IfContainer
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
+from hwt.hdl.statements.ifContainter import IfContainer
 from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.statements.switchContainer import SwitchContainer
 from hwt.hdl.types.array import HArray
+from hwt.hdl.types.sliceVal import HSliceVal
 from hwt.hdl.value import HValue
 from hwt.pyUtils.arrayQuery import arr_any
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
@@ -19,7 +20,6 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq
-from hwt.hdl.types.sliceVal import SliceVal
 
 
 FF = "FF"
@@ -263,7 +263,7 @@ class StatementRenderer():
         return n, oPort
 
     def _format_const_index(self, i):
-        if isinstance(i, SliceVal):
+        if isinstance(i, HSliceVal):
             i = i.val
         if isinstance(i, slice):
             if int(i.step) != -1:
