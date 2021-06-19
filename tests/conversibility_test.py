@@ -173,10 +173,6 @@ class Conversibility_TC(unittest.TestCase):
         u = Cdc()
         convert(u)
 
-    def test_ClkDiv3(self):
-        u = ClkDiv3()
-        convert(u)
-
     def test_ConstDriverUnit(self):
         u = ConstDriverUnit()
         convert(u)
