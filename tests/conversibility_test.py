@@ -21,12 +21,11 @@ from hwtLib.amba.datapump.interconnect.rStricOrder import RStrictOrderInterconne
 from hwtLib.amba.datapump.r import Axi_rDatapump
 from hwtLib.amba.datapump.w import Axi_wDatapump
 from hwtLib.clocking.cdc import Cdc
-from hwtLib.clocking.clkDivider import ClkDiv3
 from hwtLib.common_nonstd_interfaces.addr_data_hs_to_Axi import example_AddrDataHs_to_Axi
 from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
 from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.examples.mem.ram import SimpleAsyncRam
-from hwtLib.examples.mem.reg import Latch
+from hwtLib.examples.mem.reg import LatchReg
 from hwtLib.examples.operators.indexing import IndexingInernJoin, \
     IndexingInernRangeSplit, IndexingInternSplit
 from hwtLib.examples.showcase0 import Showcase0
@@ -220,8 +219,8 @@ class Conversibility_TC(unittest.TestCase):
         self.assertIs(split.east[0].outgoingEdges[0].dsts[0], join.west[0])
         self.assertIs(split.east[1].outgoingEdges[0].dsts[0], join.west[1])
 
-    def test_Latch(self):
-        u = Latch()
+    def test_LatchReg(self):
+        u = LatchReg()
         convert(u)
 
     def test_MMU_2pageLvl(self):
@@ -314,11 +313,10 @@ class Conversibility_TC(unittest.TestCase):
             Axi_rDatapump,
             Axi_wDatapump,
             Cdc,
-            ClkDiv3,
             EthAddrUpdater,
             ArrayIntfExample,
             SimpleAsyncRam,
-            Latch,
+            LatchReg,
             IndexingInernJoin,
             IndexingInernRangeSplit,
             IndexingInternSplit,

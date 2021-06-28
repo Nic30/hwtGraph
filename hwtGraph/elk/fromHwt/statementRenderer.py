@@ -20,7 +20,7 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq
-
+from hwt.code import And
 
 FF = "FF"
 MUX = "MUX"
@@ -51,7 +51,13 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
     :param current_en: current en/clk signal
     """
     if stm.ifFalse or stm.elIfs:
-        return
+        astm = stm.ifFalse[0]
+        if len(stm.ifFalse) == 1 and isinstance(astm, HdlAssignmentContainer) and isinstance(astm.src, HValue) and  astm.src.vld_mask == 0:
+            # clear of the ram read out when not en
+            pass
+        else:
+            return
+
     for _stm in stm.ifTrue:
         if isinstance(_stm, IfContainer):
             yield from detectRamPorts(_stm, _stm.cond & current_en)
@@ -187,10 +193,14 @@ class StatementRenderer():
                            clk: Optional[RtlSignalBase],
                            addr: RtlSignalBase,
                            inp: RtlSignalBase,
+                           w_en: Optional[RtlSignalBase],
                            connectOut):
+
         n = self.node.addNode(RAM_WRITE, cls="Operator")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
+        if w_en is not None:
+            self.addInputPort(n, "we", w_en)
 
         self.addInputPort(n, "addr", addr)
         self.addInputPort(n, "in", inp)
@@ -396,7 +406,7 @@ class StatementRenderer():
             # return NetCtx of cond directly
             s = op.operands[0]
             net_ctx = self.getInputNetCtx(s)
-            #self.netCtxs.joinNetsByValKey(net_ctx, op.result)
+            # self.netCtxs.joinNetsByValKey(net_ctx, op.result)
             return net_ctx
 
         ops = op.operands
@@ -455,7 +465,7 @@ class StatementRenderer():
 
                 elif pType == RAM_WRITE:
                     self.createRamWriteNode(memSig, enSig, addrSig,
-                                            io, True)
+                                            io, None, True)
                     consumedOutputs.add(memSig)
 
                 else:
@@ -485,7 +495,9 @@ class StatementRenderer():
             if isinstance(subStm_tmp, IfContainer):
                 clk_spec.append(subStm.cond)
                 subStm_tmp = list(walkStatementsForSig(subStm_tmp.ifTrue, s))
-                assert len(subStm_tmp) == 1, subStm_tmp
+                if len(subStm_tmp) > 1:
+                    raise NotImplementedError("Probably write with the mask", subStm_tmp)
+
                 subStm_tmp = subStm_tmp[0]
                 continue
 
@@ -508,11 +520,13 @@ class StatementRenderer():
         # collect clk and clk_en
 
         if len(clk_spec) > 1:
-            raise NotImplementedError(ifStm, clk_spec)
+            clk = clk_spec[0]
+            w_en = And(*clk_spec[1:])
         else:
             clk = clk_spec[0]
+            w_en = None
         return self.createRamWriteNode(assig.dst, clk, addr,
-                                       assig.src, connectOut)
+                                       assig.src, w_en, connectOut)
 
     def renderForSignal(self, stm: Union[HdlStatement, List[HdlStatement]],
                         s: RtlSignalBase,
