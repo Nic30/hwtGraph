@@ -17,7 +17,7 @@ setup(name='hwtGraph',
       long_description_content_type="text/markdown",
       url='https://github.com/Nic30/hwtGraph',
       author='Michal Orsak',
-      author_email='michal.o.socials@gmail.com',
+      author_email='Nic30original@gmail.com',
       install_requires=[
           'hwt>=3.7',
       ],
