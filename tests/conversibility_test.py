@@ -357,6 +357,7 @@ class Conversibility_TC(unittest.TestCase):
             example_AddrDataHs_to_Axi,
             MultiplierBooth,
             _example_AxiCacheTagArray,
+            Usb2Cdc,
             IfStatementPartiallyEnclosed,
             BlockStm_complete_override1,
         ]
