@@ -5,9 +5,11 @@ from hwt.hdl.types.array import HArray
 from hwt.pyUtils.arrayQuery import arr_all
 from hwt.pyUtils.uniqList import UniqList
 from hwt.serializer.utils import RtlSignal_sort_key
+from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
+from hwt.synthesizer.rtlLevel.rtlSignal import RtlSignal
 
 
-def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
+def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist: RtlNetlist):
     openset = UniqList(sorted(
         (s for s in netlist.signals if not s.hidden),
         key=RtlSignal_sort_key
@@ -15,11 +17,13 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
     epsToReplace = []
     while openset:
         s = openset.pop()
+        s: RtlSignal
         for ep in s.endpoints:
             # search for index ops
             if isinstance(ep, Operator)\
                     and ep.operator == AllOps.INDEX\
                     and ep.operands[0] is s:
+                ep: Operator
                 isIndexInBramWrite = isinstance(s._dtype, HArray)\
                     and arr_all(ep.result.endpoints,
                                 lambda ep: isinstance(ep, HdlStatement)\
@@ -28,6 +32,7 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist):
                     epsToReplace.append(ep)
 
         for ep in epsToReplace:
+            ep: Operator
             r = ep.result
             assert len(r.drivers) == 1, r
             r.hidden = False

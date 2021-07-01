@@ -21,6 +21,7 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq
 from hwt.code import And
+from hwt.hdl.statements.codeBlockContainer import HdlStmCodeBlockContainer
 
 FF = "FF"
 MUX = "MUX"
@@ -556,6 +557,7 @@ class StatementRenderer():
 
         # render IfContainer instances
         if isinstance(stm, IfContainer):
+            stm: IfContainer
             if full_ev_dep and not parent_ev_dep:
                 # FF with optional MUX
                 return self.renderEventDepIfContainer(stm, s, connectOut)
@@ -586,6 +588,7 @@ class StatementRenderer():
 
         # render SwitchContainer instances
         elif isinstance(stm, SwitchContainer):
+            stm: SwitchContainer
             latched = s not in encl
             inputs = []
             for _, stms in stm.cases:
@@ -606,5 +609,17 @@ class StatementRenderer():
 
             return self.createMux(s, inputs, stm.switchOn, connectOut,
                                   latched=latched)
+        elif isinstance(stm, HdlStmCodeBlockContainer):
+            stm: HdlStmCodeBlockContainer
+            stm_for_this_output = None
+            for _stm in stm.statements:
+                if s in _stm._outputs:
+                    assert stm_for_this_output is None, (
+                        "There should be already just a single driver statement because of propagatePresets()",
+                        stm, stm_for_this_output, _stm)
+                    stm_for_this_output = _stm
+            assert stm_for_this_output is not None, (
+                "The _output property of stm has members which are not true output of statement", s, stm)
+            return self.renderForSignal(stm_for_this_output, s, connectOut)
         else:
-            raise TypeError(stm)
+            raise TypeError(stm.__class__, stm)

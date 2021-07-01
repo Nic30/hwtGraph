@@ -13,6 +13,7 @@ from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
 from hwtLib.amba.axi4Lite import Axi4Lite
 from hwtLib.amba.axiLite_comp.to_axi import AxiLite_to_Axi
 from hwtLib.amba.axi_comp.buff import AxiBuff
+from hwtLib.amba.axi_comp.cache.tag_array import _example_AxiCacheTagArray
 from hwtLib.amba.axi_comp.oooOp.examples.counterHashTable import OooOpExampleCounterHashTable
 from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
 from hwtLib.amba.axi_comp.tester import AxiTester
@@ -22,6 +23,7 @@ from hwtLib.amba.datapump.r import Axi_rDatapump
 from hwtLib.amba.datapump.w import Axi_wDatapump
 from hwtLib.clocking.cdc import Cdc
 from hwtLib.common_nonstd_interfaces.addr_data_hs_to_Axi import example_AddrDataHs_to_Axi
+from hwtLib.examples.arithmetic.multiplierBooth import MultiplierBooth
 from hwtLib.examples.builders.ethAddrUpdater import EthAddrUpdater
 from hwtLib.examples.hierarchy.unitWrapper_test import ArrayIntfExample
 from hwtLib.examples.mem.ram import SimpleAsyncRam
@@ -31,6 +33,7 @@ from hwtLib.examples.operators.indexing import IndexingInernJoin, \
 from hwtLib.examples.showcase0 import Showcase0
 from hwtLib.examples.simpleAxiStream import SimpleUnitAxiStream
 from hwtLib.examples.statements.constDriver import ConstDriverUnit
+from hwtLib.examples.statements.ifStm import IfStatementPartiallyEnclosed
 from hwtLib.logic.binToOneHot import BinToOneHot
 from hwtLib.logic.bitonicSorter import BitonicSorter
 from hwtLib.logic.cntrGray import GrayCntr
@@ -44,11 +47,11 @@ from hwtLib.mem.ramXor import RamXorSingleClock
 from hwtLib.peripheral.displays.segment7 import Segment7
 from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
 from hwtLib.peripheral.spi.master import SpiMaster
+from hwtLib.peripheral.usb.usb2.device_cdc import Usb2Cdc
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
-from hwtLib.examples.arithmetic.multiplierBooth import MultiplierBooth
-from hwtLib.amba.axi_comp.cache.tag_array import _example_AxiCacheTagArray
+from hwtLib.examples.statements.codeBlockStm import BlockStm_complete_override1
 
 
 def convert(u):
@@ -300,6 +303,18 @@ class Conversibility_TC(unittest.TestCase):
         u = _example_AxiCacheTagArray()
         convert(u)
 
+    def test_Usb2Cdc(self):
+        u = Usb2Cdc()
+        convert(u)
+
+    def test_IfStatementPartiallyEnclosed(self):
+        u = IfStatementPartiallyEnclosed()
+        convert(u)
+
+    def test_BlockStm_complete_override1(self):
+        u = BlockStm_complete_override1()
+        convert(u)
+
     def test_output_is_deterministc(self):
         components = [
             DirectFF_sig,
@@ -342,6 +357,8 @@ class Conversibility_TC(unittest.TestCase):
             example_AddrDataHs_to_Axi,
             MultiplierBooth,
             _example_AxiCacheTagArray,
+            IfStatementPartiallyEnclosed,
+            BlockStm_complete_override1,
         ]
         for comp in components:
             if isinstance(comp, tuple):
@@ -361,7 +378,7 @@ class Conversibility_TC(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
 
-    # suite.addTest(Conversibility_TC('test_example_AxiCacheTagArray'))
+    # suite.addTest(Conversibility_TC('test_BlockStm_complete_override1'))
     suite.addTest(unittest.makeSuite(Conversibility_TC))
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

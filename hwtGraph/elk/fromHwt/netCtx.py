@@ -12,11 +12,11 @@ class NetCtxs(dict):
     Dictionary of NetCtx instances
     """
 
-    def __init__(self, parentNode):
+    def __init__(self, parentNode: LNode):
         dict.__init__(self)
         self.parentNode = parentNode
 
-    def applyConnections(self, root):
+    def applyConnections(self, root: LNode):
         seen = set()
         for sig, net in sorted(self.items(), key=lambda x: x[1].seqNo):
             if net in seen:
@@ -24,7 +24,7 @@ class NetCtxs(dict):
             seen.add(net)
 
             if net.endpoints:
-                assert net.drivers, net
+                assert net.drivers, ("Drivers lost somewhere during conversion", sig, net)
 
             if not net.endpoints:
                 # unconnected input or constant which was replaced by value
