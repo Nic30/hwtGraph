@@ -47,7 +47,7 @@ from hwtLib.mem.ramXor import RamXorSingleClock
 from hwtLib.peripheral.displays.segment7 import Segment7
 from hwtLib.peripheral.i2c.masterBitCntrl import I2cMasterBitCtrl
 from hwtLib.peripheral.spi.master import SpiMaster
-from hwtLib.peripheral.usb.usb2.device_cdc import Usb2Cdc
+from hwtLib.peripheral.usb.usb2.device_cdc_vcp import Usb2CdcVcp
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
@@ -303,8 +303,8 @@ class Conversibility_TC(unittest.TestCase):
         u = _example_AxiCacheTagArray()
         convert(u)
 
-    def test_Usb2Cdc(self):
-        u = Usb2Cdc()
+    def test_Usb2CdcVcp(self):
+        u = Usb2CdcVcp()
         convert(u)
 
     def test_IfStatementPartiallyEnclosed(self):
@@ -357,7 +357,7 @@ class Conversibility_TC(unittest.TestCase):
             example_AddrDataHs_to_Axi,
             MultiplierBooth,
             _example_AxiCacheTagArray,
-            Usb2Cdc,
+            Usb2CdcVcp,
             IfStatementPartiallyEnclosed,
             BlockStm_complete_override1,
         ]
