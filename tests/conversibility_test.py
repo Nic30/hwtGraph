@@ -14,7 +14,7 @@ from hwtLib.amba.axi4Lite import Axi4Lite
 from hwtLib.amba.axiLite_comp.to_axi import AxiLite_to_Axi
 from hwtLib.amba.axi_comp.buff import AxiBuff
 from hwtLib.amba.axi_comp.cache.tag_array import _example_AxiCacheTagArray
-from hwtLib.amba.axi_comp.oooOp.examples.counterHashTable import OooOpExampleCounterHashTable
+from hwtLib.examples.axi.oooOp.counterHashTable import OooOpExampleCounterHashTable
 from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
 from hwtLib.amba.axi_comp.tester import AxiTester
 from hwtLib.amba.axis_fullduplex import AxiStreamFullDuplex
