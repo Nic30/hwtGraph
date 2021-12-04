@@ -1,11 +1,11 @@
 from copy import deepcopy
-from typing import List
 
 from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.statements.codeBlockContainer import HdlStmCodeBlockContainer
 from hwt.hdl.statements.ifContainter import IfContainer
 from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.statements.switchContainer import SwitchContainer
+from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
 from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
 from hwt.synthesizer.rtlLevel.rtlSignal import RtlSignal
 
@@ -21,7 +21,7 @@ class HdlStatementCopier():
         return stm
 
 
-def propagatePresets_stm_list(stm_list: List[HdlStatement], output_sig: RtlSignal):
+def propagatePresets_stm_list(stm_list: ListOfHdlStatement, output_sig: RtlSignal):
     """
     If multiple statements are driving output_sig merge them into just one.
     """

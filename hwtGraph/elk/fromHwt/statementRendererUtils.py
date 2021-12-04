@@ -1,8 +1,9 @@
-from typing import Dict, List
+from typing import Dict
 
-from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.operator import isConst
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.statements.statement import HdlStatement
+from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
 from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
@@ -10,8 +11,8 @@ from hwtGraph.elk.fromHwt.netCtx import NetCtxs
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, toStr
 
 
-def walkStatementsForSig(statements: List[HdlStatement], s: RtlSignalBase):
-    assert isinstance(statements, list)
+def walkStatementsForSig(statements: ListOfHdlStatement, s: RtlSignalBase):
+    assert isinstance(statements, ListOfHdlStatement)
     for stm in statements:
         if s in stm._outputs:
             assert isinstance(stm._outputs, list)

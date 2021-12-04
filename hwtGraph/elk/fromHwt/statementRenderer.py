@@ -1,12 +1,15 @@
 from itertools import chain
 from typing import Union, List, Optional, Tuple
 
+from hwt.code import And
 from hwt.hdl.operator import Operator, isConst
 from hwt.hdl.operatorDefs import AllOps
 from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
+from hwt.hdl.statements.codeBlockContainer import HdlStmCodeBlockContainer
 from hwt.hdl.statements.ifContainter import IfContainer
 from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.statements.switchContainer import SwitchContainer
+from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
 from hwt.hdl.types.array import HArray
 from hwt.hdl.types.sliceVal import HSliceVal
 from hwt.hdl.value import HValue
@@ -20,8 +23,7 @@ from hwtGraph.elk.fromHwt.statementRendererUtils import VirtualLNode, \
     walkStatementsForSig, Signal2stmPortCtx
 from hwtGraph.elk.fromHwt.utils import ValueAsLNode, \
     isUselessTernary, isUselessEq
-from hwt.code import And
-from hwt.hdl.statements.codeBlockContainer import HdlStmCodeBlockContainer
+
 
 FF = "FF"
 MUX = "MUX"
@@ -529,7 +531,7 @@ class StatementRenderer():
         return self.createRamWriteNode(assig.dst, clk, addr,
                                        assig.src, w_en, connectOut)
 
-    def renderForSignal(self, stm: Union[HdlStatement, List[HdlStatement]],
+    def renderForSignal(self, stm: Union[HdlStatement, ListOfHdlStatement],
                         s: RtlSignalBase,
                         connectOut) -> Optional[Tuple[LNode, Union[RtlSignalBase, LPort]]]:
         """
