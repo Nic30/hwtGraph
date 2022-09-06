@@ -565,6 +565,7 @@ class StatementRenderer():
                 return self.renderEventDepIfContainer(stm, s, connectOut)
 
             else:
+                assert encl is not None, stm
                 latched = par is None and not parent_ev_dep and s not in encl
                 # MUX/LATCH/MUX+LATCH
                 controls = [stm.cond]
