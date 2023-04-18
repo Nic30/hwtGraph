@@ -397,7 +397,7 @@ class StatementRenderer():
                 else:
                     self.netCtxs.joinNetsByKeyVal(signal, d)
 
-        elif d_cnt == 0 and signal.def_val._isFullVld():
+        elif d_cnt == 0 and signal.def_val._is_full_valid():
             raise AssertionError("Value of this net should have been already rendered")
         else:
             raise AssertionError(signal, signal.drivers)
