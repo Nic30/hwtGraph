@@ -377,9 +377,8 @@ class Conversibility_TC(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    suite = unittest.TestSuite()
-
-    # suite.addTest(Conversibility_TC('test_BlockStm_complete_override1'))
-    suite.addTest(unittest.makeSuite(Conversibility_TC))
+    testLoader = unittest.TestLoader()
+    # suite = unittest.TestSuite([Conversibility_TC("test_BlockStm_complete_override1")])
+    suite = testLoader.loadTestsFromTestCase(Conversibility_TC)
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)
