@@ -2,21 +2,22 @@ import unittest
 
 from hwt.code import If
 from hwt.hwIOs.std import HwIOSignal
+from hwt.hwModule import HwModule
+from hwt.pyUtils.typingFuture import override
 from hwt.serializer.utils import RtlSignal_sort_key, \
     HdlStatement_sort_key
-from hwt.hwModule import HwModule
 from hwt.synth import synthesised
 from hwtGraph.elk.containers.idStore import ElkIdStore
 from hwtGraph.elk.fromHwt.convertor import HwModuleToLNode
 from hwtGraph.elk.fromHwt.defauts import DEFAULT_PLATFORM, \
     DEFAULT_LAYOUT_OPTIMIZATIONS
 from hwtLib.amba.axi4Lite import Axi4Lite
+from hwtLib.amba.axi4s_fullduplex import Axi4StreamFullDuplex
 from hwtLib.amba.axiLite_comp.to_axi import AxiLite_to_Axi
 from hwtLib.amba.axi_comp.buff import AxiBuff
 from hwtLib.amba.axi_comp.cache.tag_array import _example_AxiCacheTagArray
 from hwtLib.amba.axi_comp.stream_to_mem import Axi4streamToMem
 from hwtLib.amba.axi_comp.tester import AxiTester
-from hwtLib.amba.axi4s_fullduplex import Axi4StreamFullDuplex
 from hwtLib.amba.datapump.interconnect.rStricOrder import RStrictOrderInterconnect
 from hwtLib.amba.datapump.r import Axi_rDatapump
 from hwtLib.amba.datapump.w import Axi_wDatapump
@@ -92,11 +93,13 @@ def assert_HwModule_lexical_eq(m0: HwModule, m1: HwModule):
 
 class DirectFF_sig(HwModule):
 
-    def _declr(self):
+    @override
+    def hwDeclr(self):
         self.o = HwIOSignal()._m()
         self.clk = HwIOSignal()
 
-    def _impl(self):
+    @override
+    def hwImpl(self):
         r = self._sig("r", def_val=0)
         If(self.clk._onRisingEdge(),
            r(r)
@@ -106,21 +109,25 @@ class DirectFF_sig(HwModule):
 
 class Axi4StreamFullDuplex_wire(HwModule):
 
-    def _declr(self):
+    @override
+    def hwDeclr(self):
         self.dataIn = Axi4StreamFullDuplex()
         self.dataOut = Axi4StreamFullDuplex()._m()
 
-    def _impl(self):
+    @override
+    def hwImpl(self):
         self.dataOut(self.dataIn)
 
 
 class Axi4StreamFullDuplex_wire_nested(HwModule):
 
-    def _declr(self):
-        Axi4StreamFullDuplex_wire._declr(self)
+    @override
+    def hwDeclr(self):
+        Axi4StreamFullDuplex_wire.hwDeclr(self)
         self.core = Axi4StreamFullDuplex_wire()
 
-    def _impl(self):
+    @override
+    def hwImpl(self):
         self.core.dataIn(self.dataIn)
         self.dataOut(self.core.dataOut)
 
