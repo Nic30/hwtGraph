@@ -58,7 +58,7 @@ class Signal2stmPortCtx():
         else:
             raise ValueError(portType)
 
-        p = self.stmNode.addPort(sig.name, portType, side, originObj=sig)
+        p = self.stmNode.addPort(sig._name, portType, side, originObj=sig)
         self.data[k] = p
         return p
 

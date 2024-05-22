@@ -82,7 +82,7 @@ def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
             r.renderContent()
 
     # connect nets inside this unit
-    #print(list(x.name for x in sorted(m._ctx.signals, key=RtlSignal_sort_key)))
+    #print(list(x._name for x in sorted(m._ctx.signals, key=RtlSignal_sort_key)))
     for s in sorted(m._ctx.signals, key=RtlSignal_sort_key):
         if not s.hidden:
             net, _ = netCtx.getDefault(s)

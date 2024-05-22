@@ -53,7 +53,7 @@ def originObjOfPort(hwIO: HwIO):
         # has hierarchy
         origin = hwIO
     else:
-        origin = hwIO._hdl_port
+        origin = hwIO._hdlPort
         assert origin is not None
 
     return origin
