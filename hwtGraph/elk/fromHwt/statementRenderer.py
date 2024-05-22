@@ -2,8 +2,9 @@ from itertools import chain
 from typing import Union, List, Optional, Tuple
 
 from hwt.code import And
-from hwt.hdl.operator import Operator, isConst
-from hwt.hdl.operatorDefs import AllOps
+from hwt.hdl.const import HConst
+from hwt.hdl.operator import HOperatorNode, isConst
+from hwt.hdl.operatorDefs import HwtOps
 from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.statements.codeBlockContainer import HdlStmCodeBlockContainer
 from hwt.hdl.statements.ifContainter import IfContainer
@@ -11,10 +12,9 @@ from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.statements.switchContainer import SwitchContainer
 from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
 from hwt.hdl.types.array import HArray
-from hwt.hdl.types.sliceVal import HSliceVal
-from hwt.hdl.value import HValue
+from hwt.hdl.types.sliceConst import HSliceConst
 from hwt.pyUtils.arrayQuery import arr_any
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
+from hwt.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
@@ -55,7 +55,7 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
     """
     if stm.ifFalse or stm.elIfs:
         astm = stm.ifFalse[0]
-        if len(stm.ifFalse) == 1 and isinstance(astm, HdlAssignmentContainer) and isinstance(astm.src, HValue) and  astm.src.vld_mask == 0:
+        if len(stm.ifFalse) == 1 and isinstance(astm, HdlAssignmentContainer) and isinstance(astm.src, HConst) and  astm.src.vld_mask == 0:
             # clear of the ram read out when not en
             pass
         else:
@@ -73,7 +73,7 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
             elif _stm.src.hidden and len(_stm.src.drivers) == 1:
                 op = _stm.src.drivers[0]
                 mem = op.operands[0]
-                if isinstance(mem._dtype, HArray) and op.operator == AllOps.INDEX:
+                if isinstance(mem._dtype, HArray) and op.operator == HwtOps.INDEX:
                     r_addr = op.operands[1]
                     if _stm.indexes:
                         raise NotImplementedError()
@@ -91,7 +91,7 @@ class StatementRenderer():
         :param node: node where nodes of this statement should be rendered
         :param toL: dictionary for mapping of HDL object to layout objects
         :param portCtx: optional instance of Signal2stmPortCtx
-            for resolving of component port for RtlSignal/Interface instance
+            for resolving of component port for RtlSignal/HwIO instance
         :param rootNetCtxs: NetCtx of parent node for lazy net connection
         """
         self.stm = node.originObj
@@ -110,7 +110,7 @@ class StatementRenderer():
             self.netCtxs = NetCtxs(node)
 
     def addInputPort(self, node, name,
-                     i: Union[HValue, RtlSignalBase],
+                     i: Union[HConst, RtlSignalBase],
                      side=PortSide.WEST):
         """
         Add and connect input port on subnode
@@ -199,7 +199,7 @@ class StatementRenderer():
                            w_en: Optional[RtlSignalBase],
                            connectOut):
 
-        n = self.node.addNode(RAM_WRITE, cls="Operator")
+        n = self.node.addNode(RAM_WRITE, cls="HOperatorNode")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
         if w_en is not None:
@@ -218,7 +218,7 @@ class StatementRenderer():
                           addr: RtlSignalBase,
                           out: RtlSignalBase,
                           connectOut):
-        n = self.node.addNode(RAM_READ, cls="Operator")
+        n = self.node.addNode(RAM_READ, cls="HOperatorNode")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
 
@@ -234,7 +234,7 @@ class StatementRenderer():
                      clk: RtlSignalBase,
                      i: RtlSignalBase,
                      connectOut):
-        n = self.node.addNode(FF, cls="Operator")
+        n = self.node.addNode(FF, cls="HOperatorNode")
         self.addInputPort(n, "clk", clk)
         self.addInputPort(n, "i", i)
 
@@ -244,7 +244,7 @@ class StatementRenderer():
 
     def createMux(self,
                   output: RtlSignalBase,
-                  inputs: List[Union[RtlSignalBase, HValue]],
+                  inputs: List[Union[RtlSignalBase, HConst]],
                   control: Union[RtlSignalBase, List[RtlSignalBase]],
                   connectOut,
                   latched=True):
@@ -256,8 +256,8 @@ class StatementRenderer():
         root = self.node
         addInputPort = self.addInputPort
 
-        n = root.addNode(node_type, cls="Operator")
-        if isinstance(control, (RtlSignalBase, HValue)):
+        n = root.addNode(node_type, cls="HOperatorNode")
+        if isinstance(control, (RtlSignalBase, HConst)):
             control = [control, ]
         else:
             assert isinstance(control, (list, tuple))
@@ -276,7 +276,7 @@ class StatementRenderer():
         return n, oPort
 
     def _format_const_index(self, i):
-        if isinstance(i, HSliceVal):
+        if isinstance(i, HSliceConst):
             i = i.val
         if isinstance(i, slice):
             if int(i.step) != -1:
@@ -320,7 +320,7 @@ class StatementRenderer():
                 for i in assig.indexes:
                     assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
                 body_text = "".join([self._format_const_index(i) for i in assig.indexes])
-                n = self.node.addNode(ITEM_SET, cls="Operator", bodyText=body_text)
+                n = self.node.addNode(ITEM_SET, cls="HOperatorNode", bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
                                            assig.dst if connectOut else None,
@@ -388,7 +388,7 @@ class StatementRenderer():
         d_cnt = len(signal.drivers)
         if d_cnt == 1:
             driver = signal.drivers[0]
-            if isinstance(driver, Operator):
+            if isinstance(driver, HOperatorNode):
                 d = self.addOperatorAsLNode(driver)
 
                 if isinstance(d, LNode):
@@ -402,7 +402,7 @@ class StatementRenderer():
         else:
             raise AssertionError(signal, signal.drivers)
 
-    def addOperatorAsLNode(self, op: Operator) -> Union[LNode, NetCtx]:
+    def addOperatorAsLNode(self, op: HOperatorNode) -> Union[LNode, NetCtx]:
         root = self.node
         if isUselessTernary(op) or isUselessEq(op):
             # is in format 1 if cond else 0
@@ -413,9 +413,9 @@ class StatementRenderer():
             return net_ctx
 
         ops = op.operands
-        if op.operator == AllOps.INDEX:
+        if op.operator == HwtOps.INDEX:
             inputNames = ["in", "index"]
-        elif op.operator == AllOps.CONCAT:
+        elif op.operator == HwtOps.CONCAT:
             inputNames = []
             bit_offset = 0
             # reversed because of little endian
@@ -431,13 +431,13 @@ class StatementRenderer():
         else:
             inputNames = [None for _ in op.operands]
 
-        u = root.addNode(originObj=op, name=op.operator.id, cls="Operator")
-        u.addPort(None, PortType.OUTPUT, PortSide.EAST)
+        m = root.addNode(originObj=op, name=op.operator.id, cls="HOperatorNode")
+        m.addPort(None, PortType.OUTPUT, PortSide.EAST)
 
         for inpName, _op in zip(inputNames, ops):
-            self.addInputPort(u, inpName, _op)
+            self.addInputPort(m, inpName, _op)
 
-        return u
+        return m
 
     def renderContent(self):
         """

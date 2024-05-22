@@ -1,7 +1,7 @@
 from itertools import chain, zip_longest
 from typing import List, Generator
 
-from hwt.pyUtils.uniqList import UniqList
+from hwt.pyUtils.setList import SetList
 from hwt.synthesizer.componentPath import ComponentPath
 from hwtGraph.elk.containers.constants import PortSide, PortType, \
     NodeType, PortConstraints
@@ -248,7 +248,7 @@ class LNode():
             if formalParent is None:
                 formalParent = self
             nodes = []
-            edges = UniqList()
+            edges = SetList()
             for ch in children:
                 for e in ch.iterEdges():
                     if e.parentNode is formalParent:

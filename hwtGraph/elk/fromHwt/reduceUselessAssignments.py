@@ -1,6 +1,6 @@
 from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
-from hwt.pyUtils.uniqList import UniqList
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
+from hwt.pyUtils.setList import SetList
+from hwt.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.utils import getSinglePort
 
@@ -26,7 +26,7 @@ def reduceUselessAssignments(root: LNode):
 
             srcPorts = []
             dstPorts = []
-            edgesToRemove = UniqList()
+            edgesToRemove = SetList()
 
             inP = getSinglePort(n.west)
             outP = getSinglePort(n.east)

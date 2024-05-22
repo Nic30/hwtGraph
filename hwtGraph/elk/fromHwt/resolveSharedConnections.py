@@ -1,6 +1,6 @@
 from typing import List
 
-from hwt.pyUtils.uniqList import UniqList
+from hwt.pyUtils.setList import SetList
 from hwtGraph.elk.containers.constants import PortType
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
@@ -50,8 +50,8 @@ def portTryReduce(root: LNode, port: LPort):
         # too small or few shared connection to reduce
         return
 
-    children_to_destroy = UniqList()
-    on_target_children_to_destroy = UniqList()
+    children_to_destroy = SetList()
+    on_target_children_to_destroy = SetList()
     for child, edge in children_edge_to_destroy:
         if child.direction == PortType.OUTPUT:
             target_ch = edge.dsts

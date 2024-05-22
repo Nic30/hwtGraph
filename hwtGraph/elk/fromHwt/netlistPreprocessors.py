@@ -1,16 +1,16 @@
-from hwt.hdl.operator import Operator
-from hwt.hdl.operatorDefs import AllOps
+from hwt.hdl.operator import HOperatorNode
+from hwt.hdl.operatorDefs import HwtOps
 from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.types.array import HArray
 from hwt.pyUtils.arrayQuery import arr_all
-from hwt.pyUtils.uniqList import UniqList
+from hwt.pyUtils.setList import SetList
 from hwt.serializer.utils import RtlSignal_sort_key
 from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
 from hwt.synthesizer.rtlLevel.rtlSignal import RtlSignal
 
 
 def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist: RtlNetlist):
-    openset = UniqList(sorted(
+    openset = SetList(sorted(
         (s for s in netlist.signals if not s.hidden),
         key=RtlSignal_sort_key
     ))
@@ -20,10 +20,10 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist: RtlNetlist):
         s: RtlSignal
         for ep in s.endpoints:
             # search for index ops
-            if isinstance(ep, Operator)\
-                    and ep.operator == AllOps.INDEX\
+            if isinstance(ep, HOperatorNode)\
+                    and ep.operator == HwtOps.INDEX\
                     and ep.operands[0] is s:
-                ep: Operator
+                ep: HOperatorNode
                 isIndexInBramWrite = isinstance(s._dtype, HArray)\
                     and arr_all(ep.result.endpoints,
                                 lambda ep: isinstance(ep, HdlStatement)\
@@ -32,7 +32,7 @@ def unhideResultsOfIndexingAndConcatOnPublicSignals(netlist: RtlNetlist):
                     epsToReplace.append(ep)
 
         for ep in epsToReplace:
-            ep: Operator
+            ep: HOperatorNode
             r = ep.result
             assert len(r.drivers) == 1, r
             r.hidden = False

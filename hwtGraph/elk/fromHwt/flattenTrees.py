@@ -1,6 +1,6 @@
 from typing import Callable, Set
 
-from hwt.pyUtils.uniqList import UniqList
+from hwt.pyUtils.setList import SetList
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 
@@ -83,7 +83,7 @@ def flattenTrees(root, nodeSelector: Callable[[LNode], bool], reversePortOrder):
             flattenTrees(ch, nodeSelector, reversePortOrder)
 
     # collect all nodes which can be potentially reduced
-    reducibleChildren = UniqList(ch for ch in root.children if nodeSelector(ch))
+    reducibleChildren = SetList(ch for ch in root.children if nodeSelector(ch))
 
     removedNodes = set()
     for _treeRoot in reducibleChildren:

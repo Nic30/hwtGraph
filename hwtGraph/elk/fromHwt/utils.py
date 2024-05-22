@@ -1,16 +1,16 @@
 from io import StringIO
-from typing import Union, List
+from typing import Union, List, Optional
 
-from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
-from hwt.hdl.constants import INTF_DIRECTION
-from hwt.hdl.operator import Operator
-from hwt.hdl.operatorDefs import AllOps
+from hwt.constants import INTF_DIRECTION
+from hwt.hwIO import HwIO
+from hwt.hwModule import HwModule
+from hwt.hdl.const import HConst
+from hwt.hdl.operator import HOperatorNode
+from hwt.hdl.operatorDefs import HwtOps
 from hwt.hdl.portItem import HdlPortItem
+from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.types.defs import BIT
-from hwt.hdl.value import HValue
 from hwt.serializer.hwt import HwtSerializer
-from hwt.synthesizer.interface import Interface
-from hwt.synthesizer.unit import Unit
 from hwtGraph.elk.containers.constants import PortType, PortSide, \
     PortConstraints
 from hwtGraph.elk.containers.lEdge import LEdge
@@ -32,11 +32,11 @@ def toStr(obj):
     return buff.getvalue()
 
 
-def getParentUnit(intf: Union[Interface, Unit]):
-    while isinstance(intf._parent, Interface):
-        intf = intf._parent
+def getParentHwModule(hwIO: Union[HwIO, HwModule]) -> Optional[HwModule]:
+    while isinstance(hwIO._parent, HwIO):
+        hwIO = hwIO._parent
 
-    return intf._parent
+    return hwIO._parent
 
 
 def PortTypeFromDir(direction: INTF_DIRECTION):
@@ -48,33 +48,33 @@ def PortTypeFromDir(direction: INTF_DIRECTION):
         raise ValueError(direction)
 
 
-def originObjOfPort(intf: Interface):
-    if intf._interfaces:
+def originObjOfPort(hwIO: HwIO):
+    if hwIO._hwIOs:
         # has hierarchy
-        origin = intf
+        origin = hwIO
     else:
-        origin = intf._hdl_port
+        origin = hwIO._hdl_port
         assert origin is not None
 
     return origin
 
 
-def _addPort(n: LNode, lp: LPort, intf: Interface,
+def _addPort(n: LNode, lp: LPort, hwIO: HwIO,
              reverseDirection=False):
     """
     add port to LPort for interface
     """
-    origin = originObjOfPort(intf)
-    d = intf._direction
+    origin = originObjOfPort(hwIO)
+    d = hwIO._direction
     d = PortTypeFromDir(d)
 
     if reverseDirection:
         d = PortType.opposite(d)
 
-    new_lp = LPort(lp, d, lp.side, name=intf._name, originObj=origin)
-    if intf._interfaces:
-        for child_intf in intf._interfaces:
-            _addPort(n, new_lp, child_intf,
+    new_lp = LPort(lp, d, lp.side, name=hwIO._name, originObj=origin)
+    if hwIO._hwIOs:
+        for cHwIO in hwIO._hwIOs:
+            _addPort(n, new_lp, cHwIO,
                      reverseDirection=reverseDirection)
 
     lp.children.append(new_lp)
@@ -85,11 +85,11 @@ def _addPort(n: LNode, lp: LPort, intf: Interface,
     return new_lp
 
 
-def addPortToLNode(ln: LNode, intf: Interface, reverseDirection=False):
-    origin = originObjOfPort(intf)
+def addPortToLNode(ln: LNode, hwIO: HwIO, reverseDirection=False):
+    origin = originObjOfPort(hwIO)
 
-    d = intf._direction
-    if intf._masterDir == DIRECTION.IN:
+    d = hwIO._direction
+    if hwIO._masterDir == DIRECTION.IN:
         d = INTF_DIRECTION.opposite(d)
     d = PortTypeFromDir(d)
     if reverseDirection:
@@ -97,28 +97,28 @@ def addPortToLNode(ln: LNode, intf: Interface, reverseDirection=False):
 
     p = LNodeAddPortFromHdl(ln, origin,
                             d,
-                            intf._name)
-    for _intf in intf._interfaces:
-        _addPort(ln, p, _intf, reverseDirection=reverseDirection)
+                            hwIO._name)
+    for cHwIO in hwIO._hwIOs:
+        _addPort(ln, p, cHwIO, reverseDirection=reverseDirection)
 
     return p
 
 
-def addPort(n: LNode, intf: Interface):
+def addPort(n: LNode, hwIO: HwIO):
     """
     Add LayoutExternalPort for interface and LPort instances to this LNode
     """
-    d = intf._direction
-    if intf._masterDir == DIRECTION.IN:
+    d = hwIO._direction
+    if hwIO._masterDir == DIRECTION.IN:
         d = INTF_DIRECTION.opposite(d)
 
     d = PortTypeFromDir(d)
     ext_p = LayoutExternalPort(
-        n, name=intf._name, direction=d,
+        n, name=hwIO._name, direction=d,
         node2lnode=n._node2lnode,
-        originObj=originObjOfPort(intf))
+        originObj=originObjOfPort(hwIO))
     n.children.append(ext_p)
-    addPortToLNode(ext_p, intf, reverseDirection=True)
+    addPortToLNode(ext_p, hwIO, reverseDirection=True)
     return ext_p
 
 
@@ -127,8 +127,8 @@ def getSinglePort(ports: List[LPort]) -> LEdge:
     return ports[0]
 
 
-def isUselessTernary(op: Operator):
-    if op.operator == AllOps.TERNARY:
+def isUselessTernary(op: HOperatorNode):
+    if op.operator == HwtOps.TERNARY:
         ifTrue = op.operands[1]
         ifFalse = op.operands[2]
         if ifTrue._dtype == BIT and ifFalse._dtype == BIT:
@@ -140,8 +140,8 @@ def isUselessTernary(op: Operator):
     return False
 
 
-def isUselessEq(op: Operator):
-    if op.operator == AllOps.EQ:
+def isUselessEq(op: HOperatorNode):
+    if op.operator == HwtOps.EQ:
         o0, o1 = op.operands
         if o0._dtype.bit_length() == 1:
             try:
@@ -155,13 +155,13 @@ def isUselessEq(op: Operator):
 
 def ternaryAsSimpleAssignment(root, op):
     originObj = HdlAssignmentContainer(op.operands[0], op.result, virtualOnly=True)
-    u = root.addNode(originObj=originObj, name="Assignment", cls="Operator")
-    u.addPort("", PortType.OUTPUT, PortSide.EAST)
-    u.addPort("", PortType.INPUT, PortSide.WEST)
-    return u
+    m = root.addNode(originObj=originObj, name="Assignment", cls="HOperatorNode")
+    m.addPort("", PortType.OUTPUT, PortSide.EAST)
+    m.addPort("", PortType.INPUT, PortSide.WEST)
+    return m
 
 
-def LNodeAddPortFromHdl(node, origin: Union[Interface, HdlPortItem],
+def LNodeAddPortFromHdl(node, origin: Union[HwIO, HdlPortItem],
                         direction: PortType,
                         name: str):
     if direction == PortType.OUTPUT:
@@ -178,12 +178,12 @@ def LNodeAddPortFromHdl(node, origin: Union[Interface, HdlPortItem],
     return p
 
 
-def ValueAsLNode(root: LNode, val: HValue):
-    u = root.addNode(originObj=val,
-                     cls="Operator",
+def ValueAsLNode(root: LNode, val: HConst):
+    n = root.addNode(originObj=val,
+                     cls="HOperatorNode",
                      bodyText=toStr(val),
                      portConstraint=PortConstraints.FREE)
-    u.addPort(None, PortType.OUTPUT, PortSide.EAST)
-    return u
+    n.addPort(None, PortType.OUTPUT, PortSide.EAST)
+    return n
 
 

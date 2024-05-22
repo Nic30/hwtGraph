@@ -4,7 +4,7 @@ from hwt.hdl.operator import isConst
 from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
 from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
+from hwt.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.fromHwt.netCtx import NetCtxs

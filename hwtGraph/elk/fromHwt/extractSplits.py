@@ -2,8 +2,8 @@ from itertools import groupby
 from typing import List, Tuple
 
 from hwt.hdl.statements.assignmentContainer import HdlAssignmentContainer
-from hwt.hdl.operator import Operator, isConst
-from hwt.hdl.operatorDefs import AllOps
+from hwt.hdl.operator import HOperatorNode, isConst
+from hwt.hdl.operatorDefs import HwtOps
 from hwt.serializer.utils import RtlSignal_sort_key
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
@@ -28,7 +28,7 @@ def extractSplitsAsSingleNode(root: LNode, sliceParts: List[Tuple[slice, HdlAssi
 
     dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
     sliceNode = root.addNode(
-        name="SLICE", cls="Operator",
+        name="SLICE", cls="HOperatorNode",
         originObj=InterfaceSplitInfo(x[1] for x in sliceParts))
     inputPort = sliceNode.addPort(
         "", PortType.INPUT, PortSide.WEST)
@@ -102,8 +102,8 @@ def extractSplits(root: LNode):
                 else:
                     op = ep
 
-                if isinstance(op, Operator)\
-                        and op.operator == AllOps.INDEX\
+                if isinstance(op, HOperatorNode)\
+                        and op.operator == HwtOps.INDEX\
                         and op.operands[0] is s:
                     index = op.operands[1]
                     if isConst(index):

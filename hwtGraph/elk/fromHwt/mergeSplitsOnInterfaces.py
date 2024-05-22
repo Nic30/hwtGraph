@@ -29,7 +29,7 @@ class MergeSplitsOnInterfacesCtx():
                 yield srcPort, splitsAndConcats
 
 
-def getRootIntfPort(port: LPort):
+def getRootHwIOPort(port: LPort):
     """
     :return: most top port which contains this port
     """
@@ -197,7 +197,7 @@ def mergeSplitsOnInterfaces(root: LNode):
             for srcPort in srcPorts:
                 if isinstance(srcPort.parent, LPort):
                     # only for non primitive ports
-                    rootPort = getRootIntfPort(srcPort)
+                    rootPort = getRootHwIOPort(srcPort)
                     ctx.register(rootPort, ch, e)
 
     # join them if it is possible

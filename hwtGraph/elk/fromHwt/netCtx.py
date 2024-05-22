@@ -1,7 +1,7 @@
 from typing import Union
 
-from hwt.pyUtils.uniqList import UniqList
-from hwt.synthesizer.rtlLevel.mainBases import RtlSignalBase
+from hwt.pyUtils.setList import SetList
+from hwt.mainBases import RtlSignalBase
 from hwtGraph.elk.containers.constants import PortType
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
@@ -99,8 +99,8 @@ class NetCtx():
         assert isinstance(self.parentNode, LNode), self.parentNode
         self.actualKeys = [actualKey, ]
         self.others = others
-        self.drivers = UniqList()
-        self.endpoints = UniqList()
+        self.drivers = SetList()
+        self.endpoints = SetList()
         self.seqNo = seqNo
 
     def extend(self, other: "NetCtx"):
