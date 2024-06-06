@@ -199,7 +199,7 @@ class StatementRenderer():
                            w_en: Optional[RtlSignalBase],
                            connectOut):
 
-        n = self.node.addNode(RAM_WRITE, cls="HOperatorNode")
+        n = self.node.addNode(RAM_WRITE, cls="Operator")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
         if w_en is not None:
@@ -218,7 +218,7 @@ class StatementRenderer():
                           addr: RtlSignalBase,
                           out: RtlSignalBase,
                           connectOut):
-        n = self.node.addNode(RAM_READ, cls="HOperatorNode")
+        n = self.node.addNode(RAM_READ, cls="Operator")
         if clk is not None:
             self.addInputPort(n, "clk", clk)
 
@@ -234,7 +234,7 @@ class StatementRenderer():
                      clk: RtlSignalBase,
                      i: RtlSignalBase,
                      connectOut):
-        n = self.node.addNode(FF, cls="HOperatorNode")
+        n = self.node.addNode(FF, cls="Operator")
         self.addInputPort(n, "clk", clk)
         self.addInputPort(n, "i", i)
 
@@ -256,7 +256,7 @@ class StatementRenderer():
         root = self.node
         addInputPort = self.addInputPort
 
-        n = root.addNode(node_type, cls="HOperatorNode")
+        n = root.addNode(node_type, cls="Operator")
         if isinstance(control, (RtlSignalBase, HConst)):
             control = [control, ]
         else:
@@ -320,7 +320,7 @@ class StatementRenderer():
                 for i in assig.indexes:
                     assert isConst(i), (i, "It is expected that this is staticaly indexed connection to items of array")
                 body_text = "".join([self._format_const_index(i) for i in assig.indexes])
-                n = self.node.addNode(ITEM_SET, cls="HOperatorNode", bodyText=body_text)
+                n = self.node.addNode(ITEM_SET, cls="Operator", bodyText=body_text)
                 self.addInputPort(n, "", assig.src)
                 oPort = self.addOutputPort(n, "",
                                            assig.dst if connectOut else None,
@@ -431,7 +431,7 @@ class StatementRenderer():
         else:
             inputNames = [None for _ in op.operands]
 
-        m = root.addNode(originObj=op, name=op.operator.id, cls="HOperatorNode")
+        m = root.addNode(originObj=op, name=op.operator.id, cls="Operator")
         m.addPort(None, PortType.OUTPUT, PortSide.EAST)
 
         for inpName, _op in zip(inputNames, ops):

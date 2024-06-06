@@ -15,7 +15,7 @@ class LNode():
 
     :ivar ~.originObj: original object which this node represents
     :ivar ~.name: name of this unit
-    :ivar ~.class_name: name of class of this unit
+    :ivar ~.cls: name of class of this unit
 
     :ivar ~.north: list of LPort for on  top side.
     :ivar ~.east: list of LPort for on right side.
