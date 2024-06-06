@@ -28,7 +28,7 @@ def extractSplitsAsSingleNode(root: LNode, sliceParts: List[Tuple[slice, HdlAssi
 
     dstPortsOnInputNet = list(p.incomingEdges[0].dsts)
     sliceNode = root.addNode(
-        name="SLICE", cls="HOperatorNode",
+        name="SLICE", cls="Operator",
         originObj=InterfaceSplitInfo(x[1] for x in sliceParts))
     inputPort = sliceNode.addPort(
         "", PortType.INPUT, PortSide.WEST)
