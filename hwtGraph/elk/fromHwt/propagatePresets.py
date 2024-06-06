@@ -7,6 +7,7 @@ from hwt.hdl.statements.statement import HdlStatement
 from hwt.hdl.statements.switchContainer import SwitchContainer
 from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
 from hwt.synthesizer.rtlLevel.netlist import RtlNetlist
+from hwt.synthesizer.rtlLevel.rtlNetlistPass import RtlNetlistPass
 from hwt.synthesizer.rtlLevel.rtlSignal import RtlSignal
 
 
@@ -83,30 +84,32 @@ def propagatePresets_stm(stm: HdlStatement):
         raise NotImplementedError(stm)
 
 
-def propagatePresets(netlist: RtlNetlist):
-    """
-    Converts the format of statement branches into a format where each output
-    is driven just by a single statement.
+class RtlNetlistPassPropagatePresets(RtlNetlistPass):
 
-    :note: The example bellow is with a simple if and assignment but this function
-        should convert any number of any statements.
-
-    .. code-block::
-
-        c = 0
-        if b:
-            c = 1
-
-        # to
-
-        if b:
-            c = 1
-        else:
+    def runOnRtlNetlist(self, netlist: RtlNetlist):
+        """
+        Converts the format of statement branches into a format where each output
+        is driven just by a single statement.
+    
+        :note: The example bellow is with a simple if and assignment but this function
+            should convert any number of any statements.
+    
+        .. code-block::
+    
             c = 0
+            if b:
+                c = 1
+    
+            # to
+    
+            if b:
+                c = 1
+            else:
+                c = 0
+    
+    
+        """
 
-
-    """
-
-    for stm in netlist.statements:
-        propagatePresets_stm(stm)
+        for stm in netlist.statements:
+            propagatePresets_stm(stm)
 
