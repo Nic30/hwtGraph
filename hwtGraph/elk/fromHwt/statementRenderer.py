@@ -13,8 +13,8 @@ from hwt.hdl.statements.switchContainer import SwitchContainer
 from hwt.hdl.statements.utils.listOfHdlStatements import ListOfHdlStatement
 from hwt.hdl.types.array import HArray
 from hwt.hdl.types.sliceConst import HSliceConst
-from hwt.pyUtils.arrayQuery import arr_any
 from hwt.mainBases import RtlSignalBase
+from hwt.pyUtils.arrayQuery import arr_any
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
 from hwtGraph.elk.containers.lPort import LPort
