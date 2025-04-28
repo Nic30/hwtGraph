@@ -70,14 +70,14 @@ def convert(m: HwModule):
 
 
 def assert_HwModule_lexical_eq(m0: HwModule, m1: HwModule):
-    signals0 = sorted(m0._ctx.signals, key=RtlSignal_sort_key)
-    signals1 = sorted(m0._ctx.signals, key=RtlSignal_sort_key)
+    signals0 = sorted(m0._rtlCtx.signals, key=RtlSignal_sort_key)
+    signals1 = sorted(m0._rtlCtx.signals, key=RtlSignal_sort_key)
     assert len(signals0) == len(signals1)
     for s0, s1 in zip(signals0, signals1):
         assert repr(s0) == repr(s1)
 
-    statements0 = sorted(m0._ctx.statements, key=HdlStatement_sort_key)
-    statements1 = sorted(m0._ctx.statements, key=HdlStatement_sort_key)
+    statements0 = sorted(m0._rtlCtx.statements, key=HdlStatement_sort_key)
+    statements1 = sorted(m0._rtlCtx.statements, key=HdlStatement_sort_key)
     assert len(statements0) == len(statements1)
     for s0, s1 in zip(statements0, statements1):
         assert repr(s0) == repr(s1)

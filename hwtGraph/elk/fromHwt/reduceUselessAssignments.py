@@ -19,7 +19,7 @@ def reduceUselessAssignments(root: LNode):
                 and not n.originObj.indexes\
                 and len(n.west) == 1:
             src = n.originObj.src
-            if isinstance(src, RtlSignalBase) and src.hidden:
+            if isinstance(src, RtlSignalBase) and src._isUnnamedExpr:
                 continue
 
             to_remove.add(n)

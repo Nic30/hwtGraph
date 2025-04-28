@@ -70,8 +70,8 @@ def detectRamPorts(stm: IfContainer, current_en: RtlSignalBase):
                 w_addr = _stm.indexes[0]
                 mem = _stm.dst
                 yield (RAM_WRITE, mem, w_addr, current_en, _stm.src)
-            elif _stm.src.hidden and len(_stm.src.drivers) == 1:
-                op = _stm.src.drivers[0]
+            elif _stm.src._isUnnamedExpr and len(_stm.src._rtlDrivers) == 1:
+                op = _stm.src._rtlDrivers[0]
                 mem = op.operands[0]
                 if isinstance(mem._dtype, HArray) and op.operator == HwtOps.INDEX:
                     r_addr = op.operands[1]
@@ -133,7 +133,7 @@ class StatementRenderer():
                 v = ValueAsLNode(root, i).east[0]
                 c.addDriver(v)
             c.addEndpoint(port)
-        elif i.hidden:
+        elif i._isUnnamedExpr:
             # later connect driver of this signal to output port
             ctx, wasThereBefore = netCtxs.getDefault(i)
             if not wasThereBefore:
@@ -172,7 +172,7 @@ class StatementRenderer():
         if out is not None:
             if isinstance(out, LPort):
                 self.node.addEdge(oPort, out)
-            elif out.hidden:
+            elif out._isUnnamedExpr:
                 raise ValueError("Hidden signals should not be connected to outside", name)
             elif self.isVirtual:
                 # This node is inlined inside of parent.
@@ -304,7 +304,7 @@ class StatementRenderer():
 
         for s in inputs:
             if (not isConst(s)
-                    and s.hidden
+                    and s._isUnnamedExpr
                     and s not in self.netCtxs):
                 self.lazyLoadNet(s)
 
@@ -352,7 +352,7 @@ class StatementRenderer():
 
     def getInputNetCtx(self, signal: RtlSignalBase) -> NetCtx:
         netCtxs = self.netCtxs
-        if signal.hidden:
+        if signal._isUnnamedExpr:
             # later connect driver of this signal to output port
             ctx, wasThereBefore = netCtxs.getDefault(signal)
             if not wasThereBefore:
@@ -385,9 +385,9 @@ class StatementRenderer():
         :note: operator tree is constrained by signals with hidden==False
         :note: statement nodes are not connected automatically
         """
-        d_cnt = len(signal.drivers)
+        d_cnt = len(signal._rtlDrivers)
         if d_cnt == 1:
-            driver = signal.drivers[0]
+            driver = signal._rtlDrivers[0]
             if isinstance(driver, HOperatorNode):
                 d = self.addOperatorAsLNode(driver)
 
@@ -400,7 +400,7 @@ class StatementRenderer():
         elif d_cnt == 0 and signal.def_val._is_full_valid():
             raise AssertionError("Value of this net should have been already rendered")
         else:
-            raise AssertionError(signal, signal.drivers)
+            raise AssertionError(signal, signal._rtlDrivers)
 
     def addOperatorAsLNode(self, op: HOperatorNode) -> Union[LNode, NetCtx]:
         root = self.node

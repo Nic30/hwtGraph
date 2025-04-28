@@ -156,7 +156,7 @@ def countDirectlyConnected(port: LPort, result: dict) -> int:
         # this port is not connected, just check if it expected state
         if port.direction == PortType.INPUT:
             if port.originObj is not None:
-                assert not port.originObj.src.drivers, (port, port.originObj)
+                assert not port.originObj.src._rtlDrivers, (port, port.originObj)
             else:
                 print("Warning", port, "not connected")
         return 0

@@ -90,15 +90,15 @@ def extractSplits(root: LNode):
     :param toL: dictionary {hdl object: layout object}
     """
     toL = root._node2lnode
-    signals = sorted(root.originObj._ctx.signals, key=RtlSignal_sort_key)
+    signals = sorted(root.originObj._rtlCtx.signals, key=RtlSignal_sort_key)
 
     # search from "sig" side (look at doc string)
     for s in signals:
-        if len(s.drivers) == 1 and len(s.endpoints) > 1:
+        if len(s._rtlDrivers) == 1 and len(s._rtlEndpoints) > 1:
             sliceParts = []
-            for ep in s.endpoints:
-                if isinstance(ep, HdlAssignmentContainer) and not ep.indexes and ep.src.hidden:
-                    op = ep.src.origin
+            for ep in s._rtlEndpoints:
+                if isinstance(ep, HdlAssignmentContainer) and not ep.indexes and ep.src._isUnnamedExpr:
+                    op = ep.src._rtlObjectOrigin
                 else:
                     op = ep
 

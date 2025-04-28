@@ -52,7 +52,7 @@ def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
         HwModuleToLNode(su, n, toL, optimizations)
 
     # create subunits from statements
-    statements = sorted(m._ctx.statements, key=HdlStatement_sort_key)
+    statements = sorted(m._rtlCtx.statements, key=HdlStatement_sort_key)
     for stm in statements:
         addStmAsLNode(root, stm, stmPorts, netCtx)
 
@@ -82,15 +82,15 @@ def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
             r.renderContent()
 
     # connect nets inside this unit
-    #print(list(x._name for x in sorted(m._ctx.signals, key=RtlSignal_sort_key)))
-    for s in sorted(m._ctx.signals, key=RtlSignal_sort_key):
-        if not s.hidden:
+    #print(list(x._name for x in sorted(m._rtlCtx.signals, key=RtlSignal_sort_key)))
+    for s in sorted(m._rtlCtx.signals, key=RtlSignal_sort_key):
+        if not s._isUnnamedExpr:
             net, _ = netCtx.getDefault(s)
-            for e in s.endpoints:
+            for e in s._rtlEndpoints:
                 if isinstance(e, HdlPortItem):
                     net.addEndpoint(toL[e])
 
-            for d in s.drivers:
+            for d in s._rtlDrivers:
                 if isinstance(d, HdlPortItem):
                     net.addDriver(toL[d])
 
