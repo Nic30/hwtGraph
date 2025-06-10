@@ -53,6 +53,7 @@ from hwtLib.peripheral.usb.usb2.device_cdc_vcp import Usb2CdcVcp
 from hwtLib.structManipulators.arrayBuff_writer import ArrayBuff_writer
 from hwtLib.structManipulators.arrayItemGetter import ArrayItemGetter
 from hwtLib.structManipulators.mmu_2pageLvl import MMU_2pageLvl
+from hwtLib.xilinx.primitive.dsp48e1 import DSP48E1
 
 
 def convert(m: HwModule):
@@ -322,6 +323,10 @@ class Conversibility_TC(unittest.TestCase):
         m = BlockStm_complete_override1()
         convert(m)
 
+    def test_DSP48E1(self):
+        m = DSP48E1()
+        convert(m)
+
     def test_output_is_deterministc(self):
         components = [
             DirectFF_sig,
@@ -367,6 +372,7 @@ class Conversibility_TC(unittest.TestCase):
             Usb2CdcVcp,
             IfStatementPartiallyEnclosed,
             BlockStm_complete_override1,
+            DSP48E1,
         ]
         for comp in components:
             if isinstance(comp, tuple):
@@ -385,7 +391,7 @@ class Conversibility_TC(unittest.TestCase):
 
 if __name__ == "__main__":
     testLoader = unittest.TestLoader()
-    # suite = unittest.TestSuite([Conversibility_TC("test_BlockStm_complete_override1")])
-    suite = testLoader.loadTestsFromTestCase(Conversibility_TC)
+    suite = unittest.TestSuite([Conversibility_TC("test_DSP48E1")])
+    # suite = testLoader.loadTestsFromTestCase(Conversibility_TC)
     runner = unittest.TextTestRunner(verbosity=3)
     runner.run(suite)

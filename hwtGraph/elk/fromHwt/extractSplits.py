@@ -68,10 +68,12 @@ def extractSplitsAsSingleNode(root: LNode, sliceParts: List[Tuple[slice, HdlAssi
 
         if not indexValNodeP.outgoingEdges:
             root.children.remove(indexValNodeP.parentNode)
-
-        root.addHyperEdge([outPort],
-                          [dst[0] for dst in dstPorts],
-                          originObj=dstPorts[0][1])
+        
+        if dstPorts:
+            # only if the bits are actually used
+            root.addHyperEdge([outPort],
+                              [dst[0] for dst in dstPorts],
+                              originObj=dstPorts[0][1])
 
     dstPortsOnInputNet.append(inputPort)
     root.addHyperEdge([srcPort, ], dstPortsOnInputNet,
