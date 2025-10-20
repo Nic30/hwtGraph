@@ -1,8 +1,10 @@
 from typing import Optional
 
 from hwt.constants import INTF_DIRECTION
-from hwt.hwModule import HwModule
 from hwt.hdl.portItem import HdlPortItem
+from hwt.hwIO import HwIO
+from hwt.hwIOs.hwIOArray import HwIOArray
+from hwt.hwModule import HwModule
 from hwt.serializer.utils import HdlStatement_sort_key, RtlSignal_sort_key
 from hwtGraph.elk.containers.constants import PortType, PortSide
 from hwtGraph.elk.containers.lNode import LNode
@@ -10,6 +12,19 @@ from hwtGraph.elk.fromHwt.netCtx import NetCtxs
 from hwtGraph.elk.fromHwt.statementRenderer import StatementRenderer
 from hwtGraph.elk.fromHwt.statementRendererUtils import addStmAsLNode, VirtualLNode
 from hwtGraph.elk.fromHwt.utils import addPortToLNode, addPort, originObjOfPort
+
+
+def HwIO_isEmptyArray(hwio: HwIO):
+    if isinstance(hwio, HwIOArray):
+        if not hwio._hwIOs:
+            return True
+        else:
+            for item in hwio._hwIOs:
+                if not HwIO_isEmptyArray(item):
+                    return False
+            return True
+    else:
+        return False
 
 
 def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
@@ -58,16 +73,18 @@ def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
 
     # create ports for this unit
     for hwIO in m._hwIOs:
+        if HwIO_isEmptyArray(hwIO):
+            continue
         addPort(root, hwIO)
 
-    #k0 = HdlStatement_sort_key(statements[0])[1]
+    # k0 = HdlStatement_sort_key(statements[0])[1]
     # render content of statements
     for stm in statements:
-        #k = HdlStatement_sort_key(stm)
-        #k = (k[0], k[1] - k0)
-        #print(k)
-        #print([HdlStatement_sort_key(_k)[1] - k0 for _k in stm._iter_stms()])
-        #print(stm)
+        # k = HdlStatement_sort_key(stm)
+        # k = (k[0], k[1] - k0)
+        # print(k)
+        # print([HdlStatement_sort_key(_k)[1] - k0 for _k in stm._iter_stms()])
+        # print(stm)
         n = toL.get(stm, None)
         if n is not None:
             if isinstance(n, VirtualLNode):
@@ -82,7 +99,7 @@ def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
             r.renderContent()
 
     # connect nets inside this unit
-    #print(list(x._name for x in sorted(m._rtlCtx.signals, key=RtlSignal_sort_key)))
+    # print(list(x._name for x in sorted(m._rtlCtx.signals, key=RtlSignal_sort_key)))
     for s in sorted(m._rtlCtx.signals, key=RtlSignal_sort_key):
         if not s._isUnnamedExpr:
             net, _ = netCtx.getDefault(s)
@@ -102,6 +119,8 @@ def HwModuleToLNode(m: HwModule, node: Optional[LNode]=None,
     isRootOfWholeGraph = root.parent is None
     if not isRootOfWholeGraph:
         for hwIO in m._hwIOs:
+            if HwIO_isEmptyArray(hwIO):
+                continue
             # connect my external port to port on my container on parent
             # also override toL to use this new port
             ext_p = toL[originObjOfPort(hwIO)].parentNode
