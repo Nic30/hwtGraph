@@ -12,6 +12,7 @@ class PortConnectionCtx(list):
 
 
 class MergeSplitsOnInterfacesCtx():
+
     def __init__(self):
         self.items = {}
 
@@ -151,7 +152,10 @@ def reconnectPorts(root: LNode, srcPort: LPort,
 
             for oldP, newP in zip(oldSplitNode.west, _newSplitPorts):
                 for e in list(oldP.incomingEdges):
-                    root.addEdge(e.src, newP, originObj=e.originObj)
+                    e: LEdge
+                    if len(e.srcs) != 1:
+                        raise NotImplementedError(e)
+                    root.addEdge(e.srcs[0], newP, originObj=e.originObj)
                     e.remove()
 
         elif oldSplitNode.name == "SLICE":
@@ -160,6 +164,7 @@ def reconnectPorts(root: LNode, srcPort: LPort,
 
             for oldP, newP in zip(oldSplitNode.east, reversed(_newSplitPorts)):
                 for e in list(oldP.outgoingEdges):
+                    e: LEdge
                     if len(e.dsts) != 1:
                         raise NotImplementedError(e)
                     root.addEdge(newP, e.dsts[0], originObj=e.originObj)
