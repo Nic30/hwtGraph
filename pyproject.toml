@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hwtGraph"
+version = "2.1"
+dependencies = [
+	'hwt>=3.8',
+]
+requires-python = ">=3.8"
+authors = [
+  {name = "Michal Orsak", email = "Nic30original@gmail.com"},
+]
+
+description = "Library for conversion of HWT hardware representation to graph formats for visualization purposes"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = [
+ 'hdl', 'elk', 'vhdl', 'verilog', 'systemverilog',
+ 'visualizer', 'scheme', 'netlist', 'viewer', ]
+classifiers = [
+   "Development Status :: 4 - Beta",
+   "Intended Audience :: Developers",
+   "License :: OSI Approved :: MIT License",
+   "Operating System :: OS Independent",
+   "Programming Language :: Python :: 3 :: Only",
+   "Programming Language :: Python :: 3",
+   "Programming Language :: Python :: 3.12",
+   "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+   "Topic :: System :: Hardware",
+   "Topic :: Utilities",
+]
+
+[project.optional-dependencies]
+test = [ # :note: to install this use pip install -e '.[test]'
+    "hwtLib>=2.9"
+]
+
+[project.urls]
+Homepage = "https://github.com/Nic30/hwtGraph"
+Documentation = "https://hwtGraph.readthedocs.io/en/latest/?badge=latest"
+Repository = "https://github.com/Nic30/hwtGraph.git"
+"Bug Tracker" = "https://github.com/Nic30/hwtGraph/issues"
